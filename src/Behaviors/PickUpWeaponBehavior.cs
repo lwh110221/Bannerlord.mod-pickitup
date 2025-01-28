@@ -13,10 +13,12 @@ namespace PickItUp.Behaviors
     public class PickUpWeaponBehavior : MissionBehavior
     {
         private readonly Dictionary<Agent, float> _lastPickupAttemptTime = new();
+        private readonly Dictionary<Agent, (float StartTime, SpawnedItemEntity WeaponToPickup, EquipmentIndex TargetSlot)> _pickupAnimationTracker = new();
         private const float PICKUP_COOLDOWN = 1f; //冷却时间 秒
         private const float SEARCH_RADIUS = 5f; //搜索范围 米
         private const float PICKUP_DISTANCE = 1.5f; //拾取距离 米
         private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
+        private const float PICKUP_ANIMATION_DURATION = 0.6f; // 拾取动画持续时间 秒
         private readonly string _logFilePath;
 
         // 初始化debug日志
@@ -135,8 +137,31 @@ namespace PickItUp.Behaviors
             {
                 base.OnMissionTick(dt);
 
+                var completedAnimations = new List<Agent>();
+                foreach (var kvp in _pickupAnimationTracker)
+                {
+                    var agent = kvp.Key;
+                    var (startTime, weaponToPickup, targetSlot) = kvp.Value;
+
+                    if (Mission.Current.CurrentTime - startTime >= PICKUP_ANIMATION_DURATION)
+                    {
+                        bool removeWeapon;
+                        agent.OnItemPickup(weaponToPickup, targetSlot, out removeWeapon);
+                        _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime;
+                        DebugLog($"Agent {agent.Name} 完成拾取动画并拾取武器到槽位 {targetSlot}");
+                        completedAnimations.Add(agent);
+                    }
+                }
+                foreach (var agent in completedAnimations)
+                {
+                    _pickupAnimationTracker.Remove(agent);
+                }
+
                 foreach (var agent in Mission.Current.Agents.Where(a => a != null && CanAgentPickup(a)))
                 {
+                    if (_pickupAnimationTracker.ContainsKey(agent))
+                        continue;
+
                     try
                     {
                         // 寻找最近的武器
@@ -173,13 +198,9 @@ namespace PickItUp.Behaviors
 
                                     if (emptySlot != EquipmentIndex.None)
                                     {
-                                        // 播放拾取动画
                                         agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
-                                        // 执行拾取武器
-                                        bool removeWeapon;
-                                        agent.OnItemPickup(nearbyWeapons, emptySlot, out removeWeapon);
-                                        _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime;
-                                        DebugLog($"Agent {agent.Name} 拾取武器到槽位 {emptySlot}");
+                                        _pickupAnimationTracker[agent] = (Mission.Current.CurrentTime, nearbyWeapons, emptySlot);
+                                        DebugLog($"Agent {agent.Name} 开始拾取动画");
                                     }
                                 }
                                 catch (Exception ex)
@@ -212,6 +233,7 @@ namespace PickItUp.Behaviors
             base.OnRemoveBehavior();
             DebugLog("=== 行为移除 ===");
             _lastPickupAttemptTime.Clear();
+            _pickupAnimationTracker.Clear();
         }
 
         public override void OnBehaviorInitialize()
@@ -224,6 +246,7 @@ namespace PickItUp.Behaviors
         {
             base.OnAgentDeleted(affectedAgent);
             _lastPickupAttemptTime.Remove(affectedAgent);
+            _pickupAnimationTracker.Remove(affectedAgent);
         }
     }
 } 
