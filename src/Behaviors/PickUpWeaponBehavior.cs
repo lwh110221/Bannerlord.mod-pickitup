@@ -13,11 +13,13 @@ namespace PickItUp.Behaviors
     public class PickUpWeaponBehavior : MissionBehavior
     {
         private readonly Dictionary<Agent, float> _lastPickupAttemptTime = new();
-        private const float PICKUP_COOLDOWN = 1f;
-        private const float SEARCH_RADIUS = 5f;
-        private const float PICKUP_DISTANCE = 1.5f;
+        private const float PICKUP_COOLDOWN = 1f; //冷却时间 秒
+        private const float SEARCH_RADIUS = 5f; //搜索范围 米
+        private const float PICKUP_DISTANCE = 1.5f; //拾取距离 米
+        private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
         private readonly string _logFilePath;
 
+        // 初始化debug日志
         public PickUpWeaponBehavior()
         {
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -34,7 +36,7 @@ namespace PickItUp.Behaviors
             }
             catch
             {
-                // 忽略日志错误
+                // 忽略错误
             }
         }
 
@@ -48,8 +50,8 @@ namespace PickItUp.Behaviors
                 
                 DebugLog($"Agent {agent.Name} 丢弃武器从槽 {slot}, IsEmpty: {droppedWeapon.IsEmpty}");
                 
-                // 如果武器被丢弃，立即重置该agent的冷却时间，让其可以立即拾取新武器
-                _lastPickupAttemptTime.Remove(agent);
+                // 设置拾取延迟
+                _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime + PICKUP_DELAY;
                 
                 // 通知周围的AI检查是否需要拾取武器
                 var nearbyAgents = new MBList<Agent>();
@@ -58,7 +60,7 @@ namespace PickItUp.Behaviors
                 foreach(var nearbyAgent in nearbyAgents.Where(a => a != agent && CanAgentPickup(a)))
                 {
                     DebugLog($"通知附近的Agent {nearbyAgent.Name} 检查是否需要拾取武器");
-                    _lastPickupAttemptTime.Remove(nearbyAgent); // 重置附近AI的冷却时间
+                    _lastPickupAttemptTime[nearbyAgent] = Mission.Current.CurrentTime + PICKUP_DELAY; // 重置附近AI的冷却时间
                 }
                 
                 nearbyAgents.Clear(); // 清理列表
@@ -76,10 +78,10 @@ namespace PickItUp.Behaviors
                 return false;
             }
 
-            // 检查冷却时间
+            // 检查冷却时间和拾取延迟
             if (_lastPickupAttemptTime.TryGetValue(agent, out float lastAttempt))
             {
-                if (Mission.Current.CurrentTime - lastAttempt < PICKUP_COOLDOWN)
+                if (Mission.Current.CurrentTime < lastAttempt || Mission.Current.CurrentTime - lastAttempt < PICKUP_COOLDOWN)
                 {
                     return false;
                 }
@@ -175,6 +177,9 @@ namespace PickItUp.Behaviors
                                         agent.OnItemPickup(nearbyWeapons, emptySlot, out removeWeapon);
                                         _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime;
                                         DebugLog($"Agent {agent.Name} 拾取武器到槽位 {emptySlot}");
+                                        
+                                        // 播放拾取动画
+                                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup"), ignorePriority: false, 0UL);
                                     }
                                 }
                                 catch (Exception ex)
