@@ -19,18 +19,23 @@ namespace PickItUp.Behaviors
         private const float PICKUP_DISTANCE = 1.5f; //拾取距离 米
         private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
         private const float PICKUP_ANIMATION_DURATION = 0.6f; // 拾取动画持续时间 秒
-        private readonly string _logFilePath;
 
-        // 初始化debug日志
+#if DEBUG
+        private readonly string _logFilePath;
+#endif
+
         public PickUpWeaponBehavior()
         {
+#if DEBUG
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             _logFilePath = Path.Combine(desktopPath, "PickItUp_log.txt");
             File.WriteAllText(_logFilePath, $"=== PickItUp Mod Log Started at {DateTime.Now} ===\n");
+#endif
         }
 
         private void DebugLog(string message)
         {
+#if DEBUG
             try
             {
                 string logMessage = $"[{DateTime.Now:HH:mm:ss.fff}] {message}\n";
@@ -40,21 +45,22 @@ namespace PickItUp.Behaviors
             {
                 // 忽略错误
             }
+#endif
         }
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
         public void OnAgentDropWeapon(Agent agent, MissionWeapon droppedWeapon, EquipmentIndex slot)
         {
+            if (agent == null) return;
+            
+            // 设置拾取延迟
+            _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime + PICKUP_DELAY;
+            
+            DebugLog($"Agent {agent.Name} 丢弃武器从槽 {slot}, IsEmpty: {droppedWeapon.IsEmpty}");
+            
             try
             {
-                if (agent == null) return;
-                
-                DebugLog($"Agent {agent.Name} 丢弃武器从槽 {slot}, IsEmpty: {droppedWeapon.IsEmpty}");
-                
-                // 设置拾取延迟
-                _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime + PICKUP_DELAY;
-                
                 // 通知周围的AI检查是否需要拾取武器
                 var nearbyAgents = new MBList<Agent>();
                 Mission.Current.GetNearbyAgents(agent.Position.AsVec2, SEARCH_RADIUS, nearbyAgents);
@@ -148,8 +154,8 @@ namespace PickItUp.Behaviors
                         bool removeWeapon;
                         agent.OnItemPickup(weaponToPickup, targetSlot, out removeWeapon);
                         _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime;
-                        DebugLog($"Agent {agent.Name} 完成拾取动画并拾取武器到槽位 {targetSlot}");
                         completedAnimations.Add(agent);
+                        DebugLog($"Agent {agent.Name} 完成拾取动画并拾取武器到槽位 {targetSlot}");
                     }
                 }
                 foreach (var agent in completedAnimations)
@@ -183,29 +189,21 @@ namespace PickItUp.Behaviors
                             if (distanceSquared <= PICKUP_DISTANCE * PICKUP_DISTANCE)
                             {
                                 // 尝试拾取武器
-                                try
+                                EquipmentIndex emptySlot = EquipmentIndex.None;
+                                for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
                                 {
-                                    // 找到一个空的武器槽
-                                    EquipmentIndex emptySlot = EquipmentIndex.None;
-                                    for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
+                                    if (agent.Equipment[i].IsEmpty)
                                     {
-                                        if (agent.Equipment[i].IsEmpty)
-                                        {
-                                            emptySlot = i;
-                                            break;
-                                        }
-                                    }
-
-                                    if (emptySlot != EquipmentIndex.None)
-                                    {
-                                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
-                                        _pickupAnimationTracker[agent] = (Mission.Current.CurrentTime, nearbyWeapons, emptySlot);
-                                        DebugLog($"Agent {agent.Name} 开始拾取动画");
+                                        emptySlot = i;
+                                        break;
                                     }
                                 }
-                                catch (Exception ex)
+
+                                if (emptySlot != EquipmentIndex.None)
                                 {
-                                    DebugLog($"拾取武器时出错: {ex.Message}");
+                                    agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
+                                    _pickupAnimationTracker[agent] = (Mission.Current.CurrentTime, nearbyWeapons, emptySlot);
+                                    DebugLog($"Agent {agent.Name} 开始拾取动画");
                                 }
                             }
                             else
@@ -231,9 +229,9 @@ namespace PickItUp.Behaviors
         public override void OnRemoveBehavior()
         {
             base.OnRemoveBehavior();
-            DebugLog("=== 行为移除 ===");
             _lastPickupAttemptTime.Clear();
             _pickupAnimationTracker.Clear();
+            DebugLog("=== 行为移除 ===");
         }
 
         public override void OnBehaviorInitialize()
