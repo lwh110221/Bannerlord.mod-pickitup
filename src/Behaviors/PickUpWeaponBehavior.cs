@@ -173,13 +173,13 @@ namespace PickItUp.Behaviors
 
                                     if (emptySlot != EquipmentIndex.None)
                                     {
+                                        // 播放拾取动画
+                                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
+                                        // 执行拾取武器
                                         bool removeWeapon;
                                         agent.OnItemPickup(nearbyWeapons, emptySlot, out removeWeapon);
                                         _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime;
                                         DebugLog($"Agent {agent.Name} 拾取武器到槽位 {emptySlot}");
-                                        
-                                        // 播放拾取动画
-                                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup"), ignorePriority: false, 0UL);
                                     }
                                 }
                                 catch (Exception ex)
