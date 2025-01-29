@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
+  <tags>
+    <tag language="简体中文" />
+  </tags>
+  <strings>
+    <string id="ahao_mod_name" text="PickItUp -Ahao221" />
+    
+    <string id="ahao_pickup_settings" text="拾取设置" />
+    
+    <string id="ahao_pickup_delay" text="懵逼时间" />
+    <string id="ahao_pickup_delay_hint" text="武器被打落后AI的懵逼时间（秒）这个时间结束AI会开始去捡武器。默认：1.5 秒" />
+    
+    <string id="ahao_search_radius" text="搜索范围" />
+    <string id="ahao_search_radius_hint" text="AI搜索地上武器的范围（米）。默认：5.0 米" />
+    
+    <string id="ahao_pickup_cooldown" text="拾取冷却时间" />
+    <string id="ahao_pickup_cooldown_hint" text="AI两次拾取尝试之间的间隔时间（秒）。默认：1.0 秒" />
+    
+    <string id="ahao_huancun_settings" text="缓存相关-对游戏整体的优化，建议默认就行" />
+    
+    <string id="ahao_cleanup_interval" text="清理间隔" />
+    <string id="ahao_cleanup_interval_hint" text="内存清理的间隔时间（秒）。默认：30.0 秒" />
+    
+    <string id="ahao_cache_lifetime" text="缓存生命周期" />
+    <string id="ahao_cache_lifetime_hint" text="缓存数据的保留时间（秒）。默认：60.0 秒" />
+  </strings>
+</base> 

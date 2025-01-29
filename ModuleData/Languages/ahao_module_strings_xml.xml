@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
+  <tags>
+    <tag language="English" />
+  </tags>
+  <strings>
+    <string id="ahao_mod_name" value="PickItUp - Ahao221" />
+    <string id="ahao_pickup_delay" value="Disoriented Duration" />
+    <string id="ahao_pickup_delay_hint" value="The time (in seconds) AI remains disoriented after losing weapon before attempting to pick it up. Default: 1.5 seconds" />
+    <string id="ahao_search_radius" value="Search Radius" />
+    <string id="ahao_search_radius_hint" value="The range (in meters) AI searches for dropped weapons. Default: 5.0 meters" />
+    <string id="ahao_pickup_cooldown" value="Pickup Cooldown" />
+    <string id="ahao_pickup_cooldown_hint" value="The interval (in seconds) between AI's pickup attempts. Default: 1.0 second" />
+    <string id="ahao_cleanup_interval" value="Cleanup Interval" />
+    <string id="ahao_cleanup_interval_hint" value="The interval (in seconds) for memory cleanup. Default: 30.0 seconds" />
+    <string id="ahao_cache_lifetime" value="Cache Lifetime" />
+    <string id="ahao_cache_lifetime_hint" value="The duration (in seconds) cached data is retained. Default: 60.0 seconds" />
+    <string id="ahao_pickup_settings" value="Pickup Settings" />
+    <string id="ahao_huancun_settings" value="Cache Settings - Optimizations for overall game performance, recommended to keep default" />
+  </strings>
+</base>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Module>
+    <Name value="Pick It Up"/>
+    <Id value="PickItUp"/>
+    <Version value="v1.0.0"/>
+    <SingleplayerModule value="true"/>
+    <MultiplayerModule value="false"/>
+    <DependedModules>
+        <DependedModule Id="Native" DependentVersion="v1.2.x"/>
+        <DependedModule Id="SandBoxCore" DependentVersion="v1.2.x"/>
+        <DependedModule Id="Sandbox" DependentVersion="v1.2.x"/>
+        <DependedModule Id="CustomBattle" DependentVersion="v1.2.x"/>
+        <DependedModule Id="StoryMode" DependentVersion="v1.2.x"/>
+        <DependedModule Id="Bannerlord.Harmony" />
+        <DependedModule Id="Bannerlord.ButterLib" />
+        <DependedModule Id="Bannerlord.MBOptionScreen" DependentVersion="v5.10.1"/>
+    </DependedModules>
+    <SubModules>
+        <SubModule>
+            <Name value="PickItUp"/>
+            <DLLName value="PickItUp.dll"/>
+            <SubModuleClassType value="PickItUp.SubModule"/>
+            <Tags>
+                <Tag key="DedicatedServerType" value="none"/>
+                <Tag key="IsNoRenderModeElement" value="false"/>
+            </Tags>
+        </SubModule>
+    </SubModules>
+    <Xmls>
+        <XmlNode>
+            <XmlName id="Languages" path="ModuleData/Languages/"/>
+        </XmlNode>
+    </Xmls>
+</Module> 
