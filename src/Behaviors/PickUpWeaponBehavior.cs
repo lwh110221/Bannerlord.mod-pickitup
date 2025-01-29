@@ -18,7 +18,7 @@ namespace PickItUp.Behaviors
         private readonly List<SpawnedItemEntity> _nearbyWeapons = new(); // 用于缓存附近武器的列表
         private const float PICKUP_COOLDOWN = 1f; //冷却时间 秒
         private const float SEARCH_RADIUS = 5f; //搜索范围 米
-        private const float PICKUP_DISTANCE = 1.5f; //拾取距离 米
+        private const float PICKUP_DISTANCE = 1f; //拾取距离 米
         private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
         private const float PICKUP_ANIMATION_DURATION = 0.5f; // 拾取动画持续时间 秒
         private const float AGENT_RADIUS = 0.4f; // AI的碰撞半径
