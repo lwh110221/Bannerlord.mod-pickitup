@@ -94,6 +94,7 @@
   <ItemGroup>
     <Compile Include="src\SubModule.cs" />
     <Compile Include="src\Behaviors\PickUpWeaponBehavior.cs" />
+    <Compile Include="src\Behaviors\MemoryManager.cs" />
     <Compile Include="src\Patches\AgentPatch.cs" />
   </ItemGroup>
 

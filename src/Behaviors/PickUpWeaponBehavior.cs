@@ -17,12 +17,18 @@ namespace PickItUp.Behaviors
         private readonly Dictionary<Agent, float> _lastPathCalculationTime = new(); // 添加路径计算时间跟踪
         private readonly List<SpawnedItemEntity> _nearbyWeapons = new(); // 用于缓存附近武器的列表
         private const float PICKUP_COOLDOWN = 1f; //冷却时间 秒
-        private const float SEARCH_RADIUS = 5f; //搜索范围 米
+        private const float SEARCH_RADIUS = 10f; //搜索范围 米
         private const float PICKUP_DISTANCE = 1f; //拾取距离 米
         private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
         private const float PICKUP_ANIMATION_DURATION = 0.7f; // 拾取动画持续时间 秒
         private const float AGENT_RADIUS = 0.4f; // AI的碰撞半径
         private const float PATH_CALCULATION_INTERVAL = 0.2f; // 路径计算间隔（秒）
+
+        // 添加清理相关的计时器
+        private const float CLEANUP_INTERVAL = 30f; // 每30秒进行一次清理
+        private const float CACHE_LIFETIME = 60f;   // 缓存数据保留60秒
+
+        private readonly MemoryManager _memoryManager;
 
 #if DEBUG
         private readonly string _logFilePath;
@@ -30,6 +36,13 @@ namespace PickItUp.Behaviors
 
         public PickUpWeaponBehavior()
         {
+            _memoryManager = new MemoryManager(
+                _lastPickupAttemptTime,
+                _pickupAnimationTracker,
+                _lastPathCalculationTime,
+                DebugLog
+            );
+
 #if DEBUG
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             _logFilePath = Path.Combine(desktopPath, "PickItUp_log.txt");
@@ -287,20 +300,24 @@ namespace PickItUp.Behaviors
 
             try
             {
-                // 清理追踪状态
-                _pickupAnimationTracker.Remove(agent);
-                _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime;
+                // 先保存当前时间
+                float currentTime = Mission.Current.CurrentTime;
                 
-                // 重置AI的各种状态
-                agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_end"), ignorePriority: true, 0UL);
+                // 清理数据
+                _memoryManager.CleanupAgentData(agent);
+                
+                // 重新设置时间戳
+                _lastPickupAttemptTime[agent] = currentTime;
+                
+                // 确保动画完整播放
+          //    agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_end"), ignorePriority: true, 0UL);
+                
+                // 重置AI的其他状态
                 agent.ClearTargetFrame();
                 agent.InvalidateTargetAgent();
                 agent.InvalidateAIWeaponSelections();
                 agent.ResetLookAgent();
                 agent.ResetGuard();
-                
-                // 停止当前行为
-                agent.StopUsingGameObject();
                 
                 if (!string.IsNullOrEmpty(reason))
                 {
@@ -367,6 +384,9 @@ namespace PickItUp.Behaviors
         {
             try
             {
+                // 使用内存管理器进行清理
+                _memoryManager.Update(Mission.Current.CurrentTime);
+
                 base.OnMissionTick(dt);
 
                 // 处理正在进行拾取动画的AI
@@ -391,7 +411,7 @@ namespace PickItUp.Behaviors
                                 continue;
                             }
 
-                            // 在动画进行到一定程度时（比如70%）尝试拾取
+                            // 在动画进行到一定程度时尝试拾取
                             if (currentAnimationTime >= PICKUP_ANIMATION_DURATION * 0.7f && 
                                 currentAnimationTime < PICKUP_ANIMATION_DURATION * 0.9f)
                             {
@@ -489,16 +509,8 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                foreach (var agent in _pickupAnimationTracker.Keys.ToList())
-                {
-                    ResetAgentPickupState(agent, "行为被移除");
-                }
-                
-                _lastPickupAttemptTime.Clear();
-                _pickupAnimationTracker.Clear();
-                _lastPathCalculationTime.Clear();
+                _memoryManager.CleanupAll();
                 _nearbyWeapons.Clear();
-                
                 base.OnRemoveBehavior();
                 DebugLog("=== 行为移除 ===");
             }
