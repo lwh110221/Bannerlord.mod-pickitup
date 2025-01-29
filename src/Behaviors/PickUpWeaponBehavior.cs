@@ -24,7 +24,7 @@ namespace PickItUp.Behaviors
         private const float AGENT_RADIUS = 0.4f; // AI的碰撞半径
         private const float PATH_CALCULATION_INTERVAL = 0.2f; // 路径计算间隔（秒）
 
-        // 添加清理相关的计时器
+        // 清理相关的计时器
         private const float CLEANUP_INTERVAL = 30f; // 每30秒进行一次清理
         private const float CACHE_LIFETIME = 60f;   // 缓存数据保留60秒
 
