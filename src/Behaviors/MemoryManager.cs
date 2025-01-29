@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
+using PickItUp.Settings;
 
 namespace PickItUp.Behaviors
 {
@@ -13,10 +14,14 @@ namespace PickItUp.Behaviors
         private readonly Dictionary<Agent, float> _lastPathCalculationTime;
         private float _lastCleanupTime;
         
-        private const float CLEANUP_INTERVAL = 30f; // 每30秒进行一次清理
-        private const float CACHE_LIFETIME = 60f;   // 缓存数据保留60秒
+        //private const float CLEANUP_INTERVAL = 30f; // 每30秒进行一次清理
+        //private const float CACHE_LIFETIME = 60f;   // 缓存数据保留60秒
         
         private readonly Action<string> _debugLog;
+
+        // 从Settings获取配置值
+        private float CleanupInterval => PickItUp.Settings.Settings.Instance?.CleanupInterval ?? 30.0f;
+        private float CacheLifetime => PickItUp.Settings.Settings.Instance?.CacheLifetime ?? 60.0f;
 
         public MemoryManager(
             Dictionary<Agent, float> lastPickupAttemptTime,
@@ -35,7 +40,7 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                if (currentTime - _lastCleanupTime >= CLEANUP_INTERVAL)
+                if (currentTime - _lastCleanupTime >= CleanupInterval)
                 {
                     CleanupInactiveAgentData(currentTime);
                     _lastCleanupTime = currentTime;
@@ -104,14 +109,14 @@ namespace PickItUp.Behaviors
                 // 检查最后拾取时间
                 if (_lastPickupAttemptTime.TryGetValue(agent, out float lastAttempt))
                 {
-                    if (currentTime - lastAttempt > CACHE_LIFETIME)
+                    if (currentTime - lastAttempt > CacheLifetime)
                         return true;
                 }
 
                 // 检查最后路径计算时间
                 if (_lastPathCalculationTime.TryGetValue(agent, out float lastCalc))
                 {
-                    if (currentTime - lastCalc > CACHE_LIFETIME)
+                    if (currentTime - lastCalc > CacheLifetime)
                         return true;
                 }
 

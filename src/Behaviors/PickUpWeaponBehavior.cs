@@ -6,7 +6,8 @@ using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
-using Path = System.IO.Path;  
+using Path = System.IO.Path;
+using PickItUp.Settings;
 
 namespace PickItUp.Behaviors
 {
@@ -16,19 +17,26 @@ namespace PickItUp.Behaviors
         private readonly Dictionary<Agent, (float StartTime, SpawnedItemEntity WeaponToPickup, EquipmentIndex TargetSlot)> _pickupAnimationTracker = new();
         private readonly Dictionary<Agent, float> _lastPathCalculationTime = new(); // 添加路径计算时间跟踪
         private readonly List<SpawnedItemEntity> _nearbyWeapons = new(); // 用于缓存附近武器的列表
-        private const float PICKUP_COOLDOWN = 1f; //冷却时间 秒
-        private const float SEARCH_RADIUS = 10f; //搜索范围 米
-        private const float PICKUP_DISTANCE = 1f; //拾取距离 米
-        private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
+        //private const float PICKUP_COOLDOWN = 1f; //冷却时间 秒
+        //private const float SEARCH_RADIUS = 10f; //搜索范围 米
+        //private const float PICKUP_DELAY = 2f; // 拾取延迟 秒
         private const float PICKUP_ANIMATION_DURATION = 0.7f; // 拾取动画持续时间 秒
         private const float AGENT_RADIUS = 0.4f; // AI的碰撞半径
         private const float PATH_CALCULATION_INTERVAL = 0.2f; // 路径计算间隔（秒）
+        private const float PICKUP_DISTANCE = 1f; //拾取距离 米
 
         // 清理相关的计时器
-        private const float CLEANUP_INTERVAL = 30f; // 每30秒进行一次清理
-        private const float CACHE_LIFETIME = 60f;   // 缓存数据保留60秒
+       // private const float CLEANUP_INTERVAL = 30f; // 每30秒进行一次清理
+       // private const float CACHE_LIFETIME = 60f;   // 缓存数据保留60秒
 
         private readonly MemoryManager _memoryManager;
+
+        // 从Settings获取配置值
+        private float PickupDelay => PickItUp.Settings.Settings.Instance?.PickupDelay ?? 1.5f; // 懵逼时间
+        private float SearchRadius => PickItUp.Settings.Settings.Instance?.SearchRadius ?? 5.0f; // 搜索范围
+        private float PickupCooldown => PickItUp.Settings.Settings.Instance?.PickupCooldown ?? 1.0f; // 拾取冷却
+        private float CleanupInterval => PickItUp.Settings.Settings.Instance?.CleanupInterval ?? 30.0f; // 清理间隔
+        private float CacheLifetime => PickItUp.Settings.Settings.Instance?.CacheLifetime ?? 60.0f; // 缓存生命周期
 
 #if DEBUG
         private readonly string _logFilePath;
@@ -72,7 +80,7 @@ namespace PickItUp.Behaviors
             if (agent == null) return;
             
             // 设置拾取延迟
-            _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime + PICKUP_DELAY;
+            _lastPickupAttemptTime[agent] = Mission.Current.CurrentTime + PickupDelay;
             
             DebugLog($"Agent {agent.Name} 丢弃武器从槽 {slot}, IsEmpty: {droppedWeapon.IsEmpty}");
             
@@ -80,12 +88,12 @@ namespace PickItUp.Behaviors
             {
                 // 通知周围的AI检查是否需要拾取武器
                 var nearbyAgents = new MBList<Agent>();
-                Mission.Current.GetNearbyAgents(agent.Position.AsVec2, SEARCH_RADIUS, nearbyAgents);
+                Mission.Current.GetNearbyAgents(agent.Position.AsVec2, SearchRadius, nearbyAgents);
                 
                 foreach(var nearbyAgent in nearbyAgents.Where(a => a != agent && CanAgentPickup(a)))
                 {
                     DebugLog($"通知附近的Agent {nearbyAgent.Name} 检查是否需要拾取武器");
-                    _lastPickupAttemptTime[nearbyAgent] = Mission.Current.CurrentTime + PICKUP_DELAY; // 重置附近AI的冷却时间
+                    _lastPickupAttemptTime[nearbyAgent] = Mission.Current.CurrentTime + PickupDelay; // 重置附近AI的冷却时间
                 }
                 
                 nearbyAgents.Clear(); // 清理列表
@@ -142,7 +150,7 @@ namespace PickItUp.Behaviors
                 // 检查冷却时间和拾取延迟
                 if (_lastPickupAttemptTime.TryGetValue(agent, out float lastAttempt))
                 {
-                    if (Mission.Current.CurrentTime < lastAttempt || Mission.Current.CurrentTime - lastAttempt < PICKUP_COOLDOWN)
+                    if (Mission.Current.CurrentTime < lastAttempt || Mission.Current.CurrentTime - lastAttempt < PickupCooldown)
                     {
                         return false;
                     }
@@ -220,7 +228,7 @@ namespace PickItUp.Behaviors
 
                 // 使用直线距离进行粗略筛选
                 var distance = agent.Position.Distance(spawnedItem.GameEntity.GlobalPosition);
-                if (distance <= SEARCH_RADIUS * 1.5f) // 使用1.5倍的搜索范围进行初步筛选
+                if (distance <= SearchRadius * 1.5f) // 使用1.5倍的搜索范围进行初步筛选
                 {
                     // 只添加近战武器
                     if (IsMeleeWeapon(spawnedItem.WeaponCopy.Item.WeaponComponent))
@@ -248,7 +256,7 @@ namespace PickItUp.Behaviors
                     out pathDistance))
                 {
                     // 使用实际路径距离作为最终判断标准
-                    if (pathDistance > SEARCH_RADIUS) continue;
+                    if (pathDistance > SearchRadius) continue;
 
                     if (pathDistance < minPathDistance)
                     {
@@ -531,7 +539,7 @@ namespace PickItUp.Behaviors
             base.OnAgentDeleted(affectedAgent);
             _lastPickupAttemptTime.Remove(affectedAgent);
             _pickupAnimationTracker.Remove(affectedAgent);
-            _lastPathCalculationTime.Remove(affectedAgent); // 清理路径计算时间记录
+            _lastPathCalculationTime.Remove(affectedAgent);
         }
     }
 } 

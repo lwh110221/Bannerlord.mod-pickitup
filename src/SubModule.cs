@@ -1,6 +1,7 @@
 using TaleWorlds.MountAndBlade;
 using HarmonyLib;
 using PickItUp.Behaviors;
+using PickItUp.Settings;
 using System.Reflection;
 
 namespace PickItUp
@@ -11,6 +12,9 @@ namespace PickItUp
         protected override void OnSubModuleLoad()
         {
             base.OnSubModuleLoad();
+            
+            // 确保Settings已初始化
+            var _ = Settings.Settings.Instance;
             
             if (_harmony == null)
             {
