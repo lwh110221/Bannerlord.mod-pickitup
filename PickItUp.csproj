@@ -76,14 +76,6 @@
       <HintPath>lib\MCMv5.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="MCMv5.UI">
-      <HintPath>lib\MCMv5.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Bannerlord.UIExtenderEx">
-      <HintPath>lib\Bannerlord.UIExtenderEx.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
@@ -95,8 +87,24 @@
     <Compile Include="src\SubModule.cs" />
     <Compile Include="src\Behaviors\PickUpWeaponBehavior.cs" />
     <Compile Include="src\Behaviors\MemoryManager.cs" />
+    <Compile Include="src\Settings\Settings.cs" />
     <Compile Include="src\Patches\AgentPatch.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  
+  <PropertyGroup>
+    <PostBuildEvent>
+      echo "正在复制文件..."
+      
+      echo "复制ModuleData..."
+      xcopy "$(ProjectDir)ModuleData" "$(ProjectDir)modules\PickItUp\ModuleData" /E /I /Y
+      
+      echo "复制SubModule.xml..."
+      xcopy "$(ProjectDir)SubModule.xml" "$(ProjectDir)modules\PickItUp\" /Y
+      
+      echo "复制Release文件..."
+      xcopy "$(ProjectDir)build\Release\*.*" "$(ProjectDir)modules\PickItUp\bin\Win64_Shipping_Client\" /Y
+    </PostBuildEvent>
+  </PropertyGroup>
 </Project> 
