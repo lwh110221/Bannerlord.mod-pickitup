@@ -415,7 +415,8 @@ namespace PickItUp.Behaviors
                                 !weaponToPickup.GameEntity.IsVisibleIncludeParents() || 
                                 !IsValidWeapon(weaponToPickup))
                             {
-                                ResetAgentPickupState(agent, "目标武器已不存在或不可用");
+                                DebugLog($"Agent {agent.Name} 的目标武器已不存在或不可用");
+                                EnhancedResetAgentState(agent);
                                 continue;
                             }
 
@@ -432,7 +433,18 @@ namespace PickItUp.Behaviors
                                     // 等待动画完全结束再重置状态
                                     if (currentAnimationTime >= PICKUP_ANIMATION_DURATION)
                                     {
-                                        ResetAgentPickupState(agent, "拾取流程完成");
+                                        // 在重置状态前检查武器是否成功拾取
+                                        if (agent.Equipment[targetSlot].IsEmpty)
+                                        {
+                                            DebugLog($"Agent {agent.Name} 拾取武器失败，目标槽位为空");
+                                        }
+                                        else
+                                        {
+                                            DebugLog($"Agent {agent.Name} 成功拾取武器到槽位 {targetSlot}");
+                                        }
+                                        
+                                        // 使用增强版状态重置
+                                        EnhancedResetAgentState(agent);
                                     }
                                 }
                                 catch (Exception ex)
@@ -540,6 +552,40 @@ namespace PickItUp.Behaviors
             _lastPickupAttemptTime.Remove(affectedAgent);
             _pickupAnimationTracker.Remove(affectedAgent);
             _lastPathCalculationTime.Remove(affectedAgent);
+        }
+
+        private void EnhancedResetAgentState(Agent agent)
+        {
+            if (agent == null) return;
+
+            try
+            {
+                // 重置基本状态
+                ResetAgentPickupState(agent);
+                
+                // 强制重置AI目标
+                agent.ClearTargetFrame();
+                agent.InvalidateTargetAgent();
+                agent.ResetLookAgent();
+                agent.ResetGuard();
+                
+                // 重置AI脚本状态
+                agent.DisableScriptedMovement();
+                agent.SetScriptedFlags(agent.GetScriptedFlags() & ~Agent.AIScriptedFrameFlags.NoAttack);
+                
+                // 重置AI行为
+                agent.StopUsingGameObject();
+                
+                // 强制重新计算AI行为
+                agent.InvalidateAIWeaponSelections();
+                agent.InvalidateTargetAgent();
+                
+                DebugLog($"Agent {agent.Name} 状态已完全重置");
+            }
+            catch (Exception ex)
+            {
+                DebugLog($"重置Agent状态时出错: {ex.Message}");
+            }
         }
     }
 } 
