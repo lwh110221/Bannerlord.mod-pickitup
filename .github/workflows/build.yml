@@ -1,0 +1,64 @@
+name: Build and Release Mod
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '4.7.2'
+        
+    - name: Build Release Version
+      run: |
+        msbuild /p:Configuration=Release /p:Platform=AnyCPU
+        
+    - name: Build Debug Version
+      run: |
+        msbuild /p:Configuration=Debug /p:Platform=AnyCPU
+        
+    - name: Create Release Version
+      run: |
+        mkdir -p PickItUp\bin\Win64_Shipping_Client
+        copy "build\Release\PickItUp.dll" "PickItUp\bin\Win64_Shipping_Client\"
+        copy "build\Release\PickItUp.pdb" "PickItUp\bin\Win64_Shipping_Client\"
+        copy "SubModule.xml" "PickItUp\"
+        xcopy /E /I "ModuleData" "PickItUp\ModuleData"
+        Compress-Archive -Path PickItUp -DestinationPath PickItUp.zip -Force
+        
+    - name: Create Debug Version
+      run: |
+        mkdir -p PickItUp_Debug\bin\Win64_Shipping_Client
+        copy "build\Debug\PickItUp.dll" "PickItUp_Debug\bin\Win64_Shipping_Client\"
+        copy "build\Debug\PickItUp.pdb" "PickItUp_Debug\bin\Win64_Shipping_Client\"
+        copy "SubModule.xml" "PickItUp_Debug\"
+        xcopy /E /I "ModuleData" "PickItUp_Debug\ModuleData"
+        Compress-Archive -Path PickItUp_Debug -DestinationPath PickItUp_Debug.zip -Force
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          PickItUp.zip
+          PickItUp_Debug.zip
+        name: PickItUp ${{ github.ref_name }}
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
