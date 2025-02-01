@@ -369,9 +369,17 @@ namespace PickItUp.Behaviors
 
                 if (targetSlot != EquipmentIndex.None)
                 {
-                    agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
+                    // 判断是否在马上
+                    if (agent.HasMount)
+                    {
+                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_from_right_down_horseback_begin"), ignorePriority: false, 0UL);
+                    }
+                    else
+                    {
+                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
+                    }
                     _pickupAnimationTracker[agent] = (Mission.Current.CurrentTime, weaponToPickup, targetSlot);
-                    DebugLog($"Agent {agent.Name} 开始拾取动画，目标槽位: {targetSlot}");
+                    DebugLog($"Agent {agent.Name} 开始拾取动画，目标槽位: {targetSlot}，骑马状态: {agent.HasMount}");
                 }
                 else
                 {
