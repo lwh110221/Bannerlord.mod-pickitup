@@ -17,5 +17,13 @@
     <string id="ahao_cache_lifetime_hint" value="The duration (in seconds) cached data is retained. Default: 60.0 seconds" />
     <string id="ahao_pickup_settings" value="Pickup Settings" />
     <string id="ahao_huancun_settings" value="Cache Settings - Optimizations for overall game performance, recommended to keep default" />
+    <string id="ahao_items" value="Enable items do not disappear" />
+    <string id="ahao_items_hint" value="If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On" />
+    <string id="ahao_items_settings" value="Items Setting" />
+    <string id="ahao_max_items" value="Maximum Items" />
+    <!-- <string id="ahao_max_items_hint" value="Maximum number of items that can persist in the battlefield. Changes will take effect in the next battle. Default: 200" />
+    <string id="ahao_status_msg" value="PIU: items do not disappear -{STATUS}    Max Items: {COUNT}" />
+    <string id="ahao_status_on" value="ON" />
+    <string id="ahao_status_off" value="OFF" /> -->
   </strings>
 </base>

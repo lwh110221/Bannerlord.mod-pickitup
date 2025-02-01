@@ -14,9 +14,10 @@ namespace PickItUp.Settings
         
         public new static Settings Instance => AttributeGlobalSettings<Settings>.Instance;
 
-        [SettingPropertyBool("{=ahao_items}Enabled items do not disappear", RequireRestart = false,
-            HintText = "{=ahao_items_hint}If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On", Order = 0)]
-        [SettingPropertyGroup("{=ahao_items_settings}Items Setting", GroupOrder = 1)]
+        [SettingPropertyBool("{=ahao_items}Enable Weapon Persistence", 
+            RequireRestart = false,
+            HintText = "{=ahao_items_hint}If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On")]
+        [SettingPropertyGroup("{=ahao_items_settings}Items Setting")]
         public bool EnableWeaponPersistence { get; set; } = true;
 
         [SettingPropertyFloatingInteger("{=ahao_pickup_delay}Disoriented Duration", 0.5f, 5.0f, "0.0", RequireRestart = false, 

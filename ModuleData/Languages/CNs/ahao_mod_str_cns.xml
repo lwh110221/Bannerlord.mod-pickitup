@@ -4,7 +4,7 @@
     <tag language="简体中文" />
   </tags>
   <strings>
-    <string id="ahao_mod_name" text="PickItUp -Ahao221" />
+    <string id="ahao_mod_name" text="捡起武器 -Ahao221" />
     
     <string id="ahao_pickup_settings" text="拾取设置" />
     
@@ -24,5 +24,15 @@
     
     <string id="ahao_cache_lifetime" text="缓存生命周期" />
     <string id="ahao_cache_lifetime_hint" text="缓存数据的保留时间（秒）。默认：60.0 秒" />
+
+    <string id="ahao_items" text="启用物品不消失"/>
+    <string id="ahao_items_hint" text="启用后，掉落的武器将一直留在战场上。默认：开启"/>
+    <string id="ahao_items_settings" text="物品设置"/>
+
+    <!-- <string id="ahao_max_items" text="最大物品数量" />
+    <string id="ahao_max_items_hint" text="战场上可以同时一直存在的物品的最大数量。 更改后进入新的战斗场景才会生效。默认：200" />
+    <string id="ahao_status_msg" text="PIU：武器不消失-{STATUS}    数量上限：{COUNT}" />
+    <string id="ahao_status_on" text="已开启" />
+    <string id="ahao_status_off" text="已关闭" /> -->
   </strings>
 </base> 

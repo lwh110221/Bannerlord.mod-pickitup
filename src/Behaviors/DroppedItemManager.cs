@@ -15,6 +15,7 @@ namespace PickItUp.Behaviors
         private bool _lastPersistenceState;
         private float _settingCheckTimer = 0f;
         private const float SETTING_CHECK_INTERVAL = 5f; // 每5秒检查一次设置
+        private bool _hasDisplayedMessage = false;
 
 #if DEBUG
         private const bool _isDebugMode = true;
@@ -49,7 +50,7 @@ namespace PickItUp.Behaviors
             _droppedItems = new MBBindingList<MissionObject>();
             _lastPersistenceState = Settings.Settings.Instance.EnableWeaponPersistence;
 #if DEBUG
-            LogDebug("DroppedItemManager已初始化");
+            LogDebug("武器持久化已初始化");
 #endif
         }
 
@@ -67,6 +68,21 @@ namespace PickItUp.Behaviors
                     OnPersistenceSettingChanged(currentState);
                     _lastPersistenceState = currentState;
                 }
+            }
+
+            if (!_hasDisplayedMessage)
+            {
+                _hasDisplayedMessage = true;
+                
+                string statusEN = Settings.Settings.Instance.EnableWeaponPersistence ? "ON" : "OFF";
+                string statusCN = Settings.Settings.Instance.EnableWeaponPersistence ? "已开启" : "已关闭";
+                
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"PIU: Weapon do not disappear-{statusEN}",
+                    Colors.Yellow));
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"PIU：武器不消失-{statusCN}",
+                    Colors.Yellow));
             }
         }
 
@@ -168,15 +184,18 @@ namespace PickItUp.Behaviors
         public override void OnBehaviorInitialize()
         {
             base.OnBehaviorInitialize();
+            // 在每次进入新场景时重新获取设置
+            _hasDisplayedMessage = false;
+
 #if DEBUG
-            LogDebug("DroppedItemManager行为已初始化");
+            LogDebug($"武器持久化已初始化");
 #endif
         }
 
         public override void OnRemoveBehavior()
         {
 #if DEBUG
-            LogDebug($"DroppedItemManager行为已移除\n最终注册物品数量: {_droppedItems.Count}");
+            LogDebug($"武器持久化已移除\n最终注册物品数量: {_droppedItems.Count}");
 #endif
             base.OnRemoveBehavior();
             _droppedItems.Clear();
