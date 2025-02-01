@@ -7,6 +7,7 @@ using System;
 using TaleWorlds.Library;
 using System.Collections.Generic;
 using Debug = TaleWorlds.Library.Debug;
+using PickItUp.Settings;
 
 namespace PickItUp.Patches
 {
@@ -23,6 +24,9 @@ namespace PickItUp.Patches
         {
             try
             {
+                // Mcm检查是否启用
+                if (!Settings.Settings.Instance.EnableWeaponPersistence) return;
+
                 if (__instance?.WeaponCopy.Item == null || Mission.Current == null) return;
 
                 var manager = Mission.Current.GetMissionBehavior<DroppedItemManager>();
@@ -101,6 +105,9 @@ namespace PickItUp.Patches
         {
             try
             {
+                // 如果功能被禁用，不修改HasLifeTime的值
+                if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
+
                 if (__instance?.WeaponCopy.Item != null)
                 {
                     value = false;  // 强制设置为false，使物品永久存在
@@ -122,6 +129,9 @@ namespace PickItUp.Patches
         {
             try
             {
+                // 如果功能被禁用，允许正常移除物品
+                if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
+
                 if (missionObject is SpawnedItemEntity spawnedItem && 
                     spawnedItem.WeaponCopy.Item != null)
                 {

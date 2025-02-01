@@ -5,27 +5,90 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.Engine;
 using Debug = TaleWorlds.Library.Debug;
+using PickItUp.Settings;
 
 namespace PickItUp.Behaviors
 {
     public class DroppedItemManager : MissionBehavior
     {
         private MBBindingList<MissionObject> _droppedItems;
+        private bool _lastPersistenceState;
+        private float _settingCheckTimer = 0f;
+        private const float SETTING_CHECK_INTERVAL = 5f; // 每5秒检查一次设置
+
 #if DEBUG
         private const bool _isDebugMode = true;
-#else
-        private const bool _isDebugMode = false;
+
+        private void LogDebug(string message)
+        {
+            if (_isDebugMode)
+            {
+                Debug.Print($"PickItUp: {message}");
+            }
+        }
+
+        private string GetItemDebugInfo(SpawnedItemEntity spawnedItem)
+        {
+            string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
+            string debugInfo = $"物品已注册: {itemName}";
+            debugInfo += $"\n - 当前注册物品数量: {_droppedItems.Count}";
+            debugInfo += $"\n - 有生命周期: {spawnedItem.HasLifeTime}";
+            debugInfo += $"\n - 是否永久存在: {spawnedItem.IsDisabled}";
+            
+            if (spawnedItem.WeaponCopy.Item != null)
+            {
+                debugInfo += $"\n - 物品类型: {GetItemType(spawnedItem.WeaponCopy.Item)}";
+            }
+            
+            return debugInfo;
+        }
 #endif
         
         public DroppedItemManager()
         {
             _droppedItems = new MBBindingList<MissionObject>();
+            _lastPersistenceState = Settings.Settings.Instance.EnableWeaponPersistence;
 #if DEBUG
-            Debug.Print("PickItUp: DroppedItemManager已初始化");
+            LogDebug("DroppedItemManager已初始化");
 #endif
         }
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
+
+        public override void OnMissionTick(float dt)
+        {
+            _settingCheckTimer += dt;
+            if (_settingCheckTimer >= SETTING_CHECK_INTERVAL)
+            {
+                _settingCheckTimer = 0f;
+                bool currentState = Settings.Settings.Instance.EnableWeaponPersistence;
+                if (_lastPersistenceState != currentState)
+                {
+                    OnPersistenceSettingChanged(currentState);
+                    _lastPersistenceState = currentState;
+                }
+            }
+        }
+
+        private void OnPersistenceSettingChanged(bool newState)
+        {
+#if DEBUG
+            LogDebug($"武器持久化设置已更改为: {(newState ? "开启" : "关闭")}");
+#endif
+            if (!newState)
+            {
+                // 设置被禁用时，只处理已注册的物品
+                foreach (var item in _droppedItems.OfType<SpawnedItemEntity>())
+                {
+                    if (item != null)
+                    {
+                        item.HasLifeTime = true;
+                    }
+                }
+                _droppedItems.Clear();
+            }
+            // 当设置开启时，不做任何操作，让新的掉落物品自然进入系统
+        }
 
         private string GetItemType(ItemObject item)
         {
@@ -68,29 +131,19 @@ namespace PickItUp.Behaviors
 
         public void RegisterDroppedItem(MissionObject item)
         {
+            if (!Settings.Settings.Instance.EnableWeaponPersistence) return;
+
             if (item != null && !_droppedItems.Contains(item))
             {
                 _droppedItems.Add(item);
                 
                 if (item is SpawnedItemEntity spawnedItem)
                 {
-                    // 设置物品不会被移除
-                    spawnedItem.SetDisabled(false);  // 确保物品启用
-                    spawnedItem.HasLifeTime = false; // 设置物品永久存在
+                    spawnedItem.SetDisabled(false);
+                    spawnedItem.HasLifeTime = false;
 
 #if DEBUG
-                    string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
-                    string debugInfo = $"物品已注册: {itemName}";
-                    debugInfo += $"\n - 当前追踪物品数量: {_droppedItems.Count}";
-                    debugInfo += $"\n - 有生命周期: {spawnedItem.HasLifeTime}";
-                    debugInfo += $"\n - 是否永久存在: {spawnedItem.IsDisabled}";
-                    
-                    if (spawnedItem.WeaponCopy.Item != null)
-                    {
-                        debugInfo += $"\n - 物品类型: {GetItemType(spawnedItem.WeaponCopy.Item)}";
-                    }
-                    
-                    Debug.Print(debugInfo);
+                    LogDebug(GetItemDebugInfo(spawnedItem));
 #endif
                 }
             }
@@ -106,7 +159,7 @@ namespace PickItUp.Behaviors
                 if (item is SpawnedItemEntity spawnedItem)
                 {
                     string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
-                    Debug.Print($"物品已移除: {itemName}\n当前追踪物品数量: {_droppedItems.Count}");
+                    LogDebug($"物品已移除: {itemName}\n当前注册物品数量: {_droppedItems.Count}");
                 }
 #endif
             }
@@ -116,14 +169,14 @@ namespace PickItUp.Behaviors
         {
             base.OnBehaviorInitialize();
 #if DEBUG
-            Debug.Print("DroppedItemManager行为已初始化");
+            LogDebug("DroppedItemManager行为已初始化");
 #endif
         }
 
         public override void OnRemoveBehavior()
         {
 #if DEBUG
-            Debug.Print($"DroppedItemManager行为已移除\n最终追踪物品数量: {_droppedItems.Count}");
+            LogDebug($"DroppedItemManager行为已移除\n最终注册物品数量: {_droppedItems.Count}");
 #endif
             base.OnRemoveBehavior();
             _droppedItems.Clear();

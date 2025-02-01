@@ -14,6 +14,11 @@ namespace PickItUp.Settings
         
         public new static Settings Instance => AttributeGlobalSettings<Settings>.Instance;
 
+        [SettingPropertyBool("{=ahao_items}Enabled items do not disappear", RequireRestart = false,
+            HintText = "{=ahao_items_hint}If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On", Order = 0)]
+        [SettingPropertyGroup("{=ahao_items_settings}Items Setting", GroupOrder = 1)]
+        public bool EnableWeaponPersistence { get; set; } = true;
+
         [SettingPropertyFloatingInteger("{=ahao_pickup_delay}Disoriented Duration", 0.5f, 5.0f, "0.0", RequireRestart = false, 
         HintText = "{=ahao_pickup_delay_hint}The time (in seconds) AI remains disoriented after losing weapon before attempting to pick it up. Default: 1.5 seconds", Order = 0)]
         [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 0)]
@@ -41,6 +46,7 @@ namespace PickItUp.Settings
 
         public Settings()
         {
+            EnableWeaponPersistence = true;  // 默认启用武器持久化
             PickupDelay = 1.5f;        //懵逼时间
             SearchRadius = 5.0f;       //搜索范围
             PickupCooldown = 1.0f;     //拾取冷却
