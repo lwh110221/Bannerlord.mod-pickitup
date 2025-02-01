@@ -38,6 +38,8 @@ namespace PickItUp
         {
             base.OnMissionBehaviorInitialize(mission);
             mission.AddMissionBehavior(new PickUpWeaponBehavior());
+            // 掉落物品一直显示
+            mission.AddMissionBehavior(new DroppedItemManager());
         }
     }
 } 
