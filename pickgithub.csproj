@@ -13,25 +13,28 @@
     <Deterministic>true</Deterministic>
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>D:\game\steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\PickItUp\bin\Win64_Shipping_Client\</OutputPath>
+    <OutputPath>build\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>D:\game\steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\PickItUp\bin\Win64_Shipping_Client\</OutputPath>
+    <OutputPath>build\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+  
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>lib\0Harmony.dll</HintPath>
@@ -79,24 +82,17 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
+  
   <ItemGroup>
     <Compile Include="src\SubModule.cs" />
     <Compile Include="src\Behaviors\PickUpWeaponBehavior.cs" />
     <Compile Include="src\Behaviors\MemoryManager.cs" />
     <Compile Include="src\Settings\Settings.cs" />
     <Compile Include="src\Patches\AgentPatch.cs" />
-    <Compile Include="src\Behaviors\DroppedItemManager.cs" />
-    <Compile Include="src\Patches\DroppedItemPatch.cs" />
   </ItemGroup>
+
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <Target Name="CopyToBuildFolder" AfterTargets="Build">
-    <PropertyGroup>
-      <BuildOutputPath>$(ProjectDir)build\$(Configuration)\</BuildOutputPath>
-    </PropertyGroup>
-    <MakeDir Directories="$(BuildOutputPath)" />
-    <Copy SourceFiles="$(OutputPath)PickItUp.dll" DestinationFolder="$(BuildOutputPath)" />
-    <Copy SourceFiles="$(OutputPath)PickItUp.pdb" DestinationFolder="$(BuildOutputPath)" Condition="Exists('$(OutputPath)PickItUp.pdb')" />
-  </Target>
+  
   <PropertyGroup>
     <PostBuildEvent>
       echo "正在复制文件..."
