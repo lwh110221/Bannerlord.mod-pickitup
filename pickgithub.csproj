@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>build\Debug\</OutputPath>
+    <OutputPath>$(ProjectDir)build\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -28,7 +28,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>build\Release\</OutputPath>
+    <OutputPath>$(ProjectDir)build\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -89,22 +89,30 @@
     <Compile Include="src\Behaviors\MemoryManager.cs" />
     <Compile Include="src\Settings\Settings.cs" />
     <Compile Include="src\Patches\AgentPatch.cs" />
+    <Compile Include="src\Behaviors\DroppedItemManager.cs" />
+    <Compile Include="src\Patches\DroppedItemPatch.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   
-  <PropertyGroup>
-    <PostBuildEvent>
-      echo "正在复制文件..."
-      
-      echo "复制ModuleData..."
-      xcopy "$(ProjectDir)ModuleData" "$(ProjectDir)modules\PickItUp\ModuleData" /E /I /Y
-      
-      echo "复制SubModule.xml..."
-      xcopy "$(ProjectDir)SubModule.xml" "$(ProjectDir)modules\PickItUp\" /Y
-      
-      echo "复制Release文件..."
-      xcopy "$(ProjectDir)build\Release\*.*" "$(ProjectDir)modules\PickItUp\bin\Win64_Shipping_Client\" /Y
-    </PostBuildEvent>
-  </PropertyGroup>
+  <Target Name="CreateDirectories" BeforeTargets="Build">
+    <MakeDir Directories="$(ProjectDir)build\$(Configuration)" />
+    <MakeDir Directories="$(ProjectDir)modules\PickItUp\bin\Win64_Shipping_Client" />
+    <MakeDir Directories="$(ProjectDir)modules\PickItUp\ModuleData" />
+  </Target>
+
+  <Target Name="CopyModuleFiles" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
+    <ItemGroup>
+      <ModuleDataFiles Include="$(ProjectDir)ModuleData\**\*.*" />
+    </ItemGroup>
+    
+    <Copy SourceFiles="$(ProjectDir)SubModule.xml" 
+          DestinationFolder="$(ProjectDir)modules\PickItUp" />
+          
+    <Copy SourceFiles="@(ModuleDataFiles)"
+          DestinationFiles="@(ModuleDataFiles->'$(ProjectDir)modules\PickItUp\ModuleData\%(RecursiveDir)%(Filename)%(Extension)')" />
+          
+    <Copy SourceFiles="$(OutputPath)PickItUp.dll;$(OutputPath)PickItUp.pdb"
+          DestinationFolder="$(ProjectDir)modules\PickItUp\bin\Win64_Shipping_Client" />
+  </Target>
 </Project> 
