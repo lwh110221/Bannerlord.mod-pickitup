@@ -21,8 +21,9 @@
     <string id="ahao_items_hint" value="If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On" />
     <string id="ahao_items_settings" value="Items Setting" />
     <string id="ahao_max_items" value="Maximum Items" />
-    <!-- <string id="ahao_max_items_hint" value="Maximum number of items that can persist in the battlefield. Changes will take effect in the next battle. Default: 200" />
-    <string id="ahao_status_msg" value="PIU: items do not disappear -{STATUS}    Max Items: {COUNT}" />
+    <string id="ahao_show_status" value="Show Status Message"/>
+    <string id="ahao_show_status_hint" value="Whether to display status messages when entering the battlefield. Default: On"/>
+    <!-- <string id="ahao_status_msg" value="PIU: items do not disappear -{STATUS}    Max Items: {COUNT}" />
     <string id="ahao_status_on" value="ON" />
     <string id="ahao_status_off" value="OFF" /> -->
   </strings>

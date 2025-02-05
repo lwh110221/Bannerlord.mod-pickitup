@@ -20,6 +20,12 @@ namespace PickItUp.Settings
         [SettingPropertyGroup("{=ahao_items_settings}Items Setting")]
         public bool EnableWeaponPersistence { get; set; } = true;
 
+        [SettingPropertyBool("{=ahao_show_status}Show Status Message", 
+            RequireRestart = false,
+            HintText = "{=ahao_show_status_hint}Whether to display status messages when entering the battlefield. Default: On")]
+        [SettingPropertyGroup("{=ahao_items_settings}Items Setting")]
+        public bool ShowStatusMessage { get; set; } = true;
+
         [SettingPropertyFloatingInteger("{=ahao_pickup_delay}Disoriented Duration", 0.5f, 5.0f, "0.0", RequireRestart = false, 
         HintText = "{=ahao_pickup_delay_hint}The time (in seconds) AI remains disoriented after losing weapon before attempting to pick it up. Default: 1.5 seconds", Order = 0)]
         [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 0)]
@@ -53,6 +59,7 @@ namespace PickItUp.Settings
             PickupCooldown = 1.0f;     //拾取冷却
             CleanupInterval = 30.0f;   //清理间隔
             CacheLifetime = 60.0f;     //缓存生命周期
+            ShowStatusMessage = true; // 默认显示状态消息
         }
     }
 } 

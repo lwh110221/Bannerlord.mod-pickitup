@@ -70,7 +70,7 @@ namespace PickItUp.Behaviors
                 }
             }
 
-            if (!_hasDisplayedMessage)
+            if (!_hasDisplayedMessage && Settings.Settings.Instance.ShowStatusMessage)
             {
                 _hasDisplayedMessage = true;
                 
