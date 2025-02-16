@@ -342,17 +342,18 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                // 原生方法选择合适的槽位
-                if (agent == null || weaponToPickup == null || weaponToPickup.GameEntity == null) 
+                // 空值和状态检查
+                if (agent == null || !agent.IsActive() || agent.Health <= 0 || 
+                    weaponToPickup == null || weaponToPickup.GameEntity == null)
                 {
                     if (agent != null)
                     {
-                        ResetAgentPickupState(agent, "武器对象无效");
+                        ResetAgentPickupState(agent, "武器或agent状态无效");
                     }
                     return;
                 }
 
-                // 在开始拾取动画前进行一次完整的武器状态检查
+                // 检查武器的有效性
                 if (!IsValidWeapon(weaponToPickup))
                 {
                     DebugLog($"Agent {agent.Name} 尝试拾取无效武器");
@@ -360,23 +361,53 @@ namespace PickItUp.Behaviors
                     return;
                 }
 
-                // 使用原生方法选择合适的槽位
-                EquipmentIndex targetSlot = MissionEquipment.SelectWeaponPickUpSlot(
-                    agent, 
-                    weaponToPickup.WeaponCopy, 
-                    false
-                );
+                // 确保WeaponCopy是有效的
+                if (weaponToPickup.WeaponCopy.IsEmpty || weaponToPickup.WeaponCopy.Item == null)
+                {
+                    DebugLog($"Agent {agent.Name} 的目标武器WeaponCopy无效");
+                    ResetAgentPickupState(agent, "WeaponCopy无效");
+                    return;
+                }
+
+                // 骑马状态特殊处理
+                if (agent.HasMount)
+                {
+                    // 检查是否处于适合拾取的状态
+                    if (agent.GetCurrentVelocity().Length > 5f)
+                    {
+                        DebugLog($"Agent {agent.Name} 骑马速度过快，不适合拾取");
+                        ResetAgentPickupState(agent, "骑马速度过快");
+                        return;
+                    }
+                }
+
+                // 使用try-catch包装原生方法调用
+                EquipmentIndex targetSlot;
+                try
+                {
+                    targetSlot = MissionEquipment.SelectWeaponPickUpSlot(
+                        agent, 
+                        weaponToPickup.WeaponCopy, 
+                        false
+                    );
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"SelectWeaponPickUpSlot失败: {ex.Message}");
+                    ResetAgentPickupState(agent, "选择槽位失败");
+                    return;
+                }
 
                 if (targetSlot != EquipmentIndex.None)
                 {
-                    // 判断是否在马上
+                    // 根据骑马状态选择适当的动画
                     if (agent.HasMount)
                     {
-                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_from_right_down_horseback_begin"), ignorePriority: false, 0UL);
+                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_from_right_down_horseback_begin"), ignorePriority: true, 0UL);
                     }
                     else
                     {
-                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: false, 0UL);
+                        agent.SetActionChannel(0, ActionIndexCache.Create("act_pickup_down_begin"), ignorePriority: true, 0UL);
                     }
                     _pickupAnimationTracker[agent] = (Mission.Current.CurrentTime, weaponToPickup, targetSlot);
                     DebugLog($"Agent {agent.Name} 开始拾取动画，目标槽位: {targetSlot}，骑马状态: {agent.HasMount}");
@@ -405,10 +436,22 @@ namespace PickItUp.Behaviors
 
                 base.OnMissionTick(dt);
 
+                if (Mission.Current == null || Mission.Current.Scene == null)
+                {
+                    DebugLog("Mission或Scene为空，跳过处理");
+                    return;
+                }
+
                 // 处理正在进行拾取动画的AI
                 foreach (var kvp in _pickupAnimationTracker.ToList())
                 {
                     var agent = kvp.Key;
+                    if (agent == null || !agent.IsActive())
+                    {
+                        _pickupAnimationTracker.Remove(kvp.Key);
+                        continue;
+                    }
+
                     var (startTime, weaponToPickup, targetSlot) = kvp.Value;
                     float currentAnimationTime = Mission.Current.CurrentTime - startTime;
 
@@ -434,6 +477,14 @@ namespace PickItUp.Behaviors
                             {
                                 try
                                 {
+                                    // 额外的安全检查
+                                    if (agent.HasMount && agent.GetCurrentVelocity().Length > 5f)
+                                    {
+                                        DebugLog($"Agent {agent.Name} 骑马速度过快，取消拾取");
+                                        EnhancedResetAgentState(agent);
+                                        continue;
+                                    }
+
                                     bool removeWeapon;
                                     agent.OnItemPickup(weaponToPickup, targetSlot, out removeWeapon);
                                     DebugLog($"Agent {agent.Name} 完成拾取武器到槽位 {targetSlot}");
@@ -451,27 +502,26 @@ namespace PickItUp.Behaviors
                                             DebugLog($"Agent {agent.Name} 成功拾取武器到槽位 {targetSlot}");
                                         }
                                         
-                                        // 使用增强版状态重置
                                         EnhancedResetAgentState(agent);
                                     }
                                 }
                                 catch (Exception ex)
                                 {
                                     DebugLog($"执行拾取时出错: {ex.Message}");
-                                    ResetAgentPickupState(agent, "拾取执行失败");
+                                    EnhancedResetAgentState(agent);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
                             DebugLog($"处理拾取动画时出错: {ex.Message}");
-                            ResetAgentPickupState(agent, $"拾取出错: {ex.Message}");
+                            EnhancedResetAgentState(agent);
                         }
                     }
                     else
                     {
                         // 如果超过动画时间还没完成，强制重置状态
-                        ResetAgentPickupState(agent, "拾取动画超时");
+                        EnhancedResetAgentState(agent);
                     }
                 }
 
@@ -483,6 +533,10 @@ namespace PickItUp.Behaviors
                         if (!CanAgentPickup(agent) || _pickupAnimationTracker.ContainsKey(agent))
                             continue;
 
+                        // 骑马状态下的额外检查
+                        if (agent.HasMount && agent.GetCurrentVelocity().Length > 5f)
+                            continue;
+
                         // 检查路径计算间隔
                         if (_lastPathCalculationTime.TryGetValue(agent, out float lastCalcTime) &&
                             Mission.Current.CurrentTime - lastCalcTime < PATH_CALCULATION_INTERVAL)
@@ -491,7 +545,7 @@ namespace PickItUp.Behaviors
                         }
 
                         var nearbyWeapon = FindNearestWeapon(agent);
-                        if (nearbyWeapon != null)
+                        if (nearbyWeapon != null && IsValidWeapon(nearbyWeapon))  // 添加额外的有效性检查
                         {
                             float pathDistance;
                             WorldPosition agentWorldPosition = agent.GetWorldPosition();
@@ -509,7 +563,7 @@ namespace PickItUp.Behaviors
                                 {
                                     TryPickupWeapon(agent, nearbyWeapon);
                                 }
-                                else
+                                else if (pathDistance <= SearchRadius)  // 只在合理范围内移动
                                 {
                                     agent.AIMoveToGameObjectEnable(nearbyWeapon, null, Agent.AIScriptedFrameFlags.NoAttack);
                                     DebugLog($"Agent {agent.Name} 移动到武器位置，路径距离: {pathDistance}");
@@ -522,7 +576,7 @@ namespace PickItUp.Behaviors
                         DebugLog($"处理Agent {agent?.Name} 时出错: {ex.Message}");
                         if (agent != null)
                         {
-                            ResetAgentPickupState(agent, $"处理出错: {ex.Message}");
+                            EnhancedResetAgentState(agent);
                         }
                     }
                 }
