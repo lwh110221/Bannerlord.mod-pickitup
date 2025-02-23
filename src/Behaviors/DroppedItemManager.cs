@@ -6,6 +6,7 @@ using System.Linq;
 using TaleWorlds.Engine;
 using Debug = TaleWorlds.Library.Debug;
 using PickItUp.Settings;
+using System;
 
 namespace PickItUp.Behaviors
 {
@@ -194,11 +195,52 @@ namespace PickItUp.Behaviors
 
         public override void OnRemoveBehavior()
         {
+            try
+            {
 #if DEBUG
-            LogDebug($"武器持久化已移除\n最终注册物品数量: {_droppedItems.Count}");
+                LogDebug($"=== 开始场景退出清理 ===");
+                LogDebug($"当前注册物品数量: {_droppedItems.Count}");
 #endif
-            base.OnRemoveBehavior();
-            _droppedItems.Clear();
+                // 先清理所有物品的引用
+                foreach (var item in _droppedItems.ToList())
+                {
+                    try
+                    {
+                        if (item is SpawnedItemEntity spawnedItem)
+                        {
+                            // 确保物品可以被游戏正常清理
+                            spawnedItem.HasLifeTime = true;
+                            spawnedItem.SetDisabled(true);
+#if DEBUG
+                            string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
+                            LogDebug($"清理物品: {itemName}");
+#endif
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+#if DEBUG
+                        LogDebug($"清理单个物品时出错: {ex.Message}");
+#endif
+                    }
+                }
+
+                // 清空列表
+                _droppedItems.Clear();
+                
+                // 调用基类的清理
+                base.OnRemoveBehavior();
+
+#if DEBUG
+                LogDebug("=== 场景退出清理完成 ===");
+#endif
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                LogDebug($"场景退出清理时出错: {ex.Message}");
+#endif
+            }
         }
     }
 } 

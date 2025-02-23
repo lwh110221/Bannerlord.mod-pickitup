@@ -1,8 +1,9 @@
 using TaleWorlds.MountAndBlade;
 using HarmonyLib;
 using PickItUp.Behaviors;
-using PickItUp.Settings;
 using System.Reflection;
+using TaleWorlds.Core;
+using JetBrains.Annotations;
 
 namespace PickItUp
 {
@@ -12,21 +13,17 @@ namespace PickItUp
         protected override void OnSubModuleLoad()
         {
             base.OnSubModuleLoad();
-            
-            // 确保Settings已初始化
-            var _ = Settings.Settings.Instance;
-            
-            if (_harmony == null)
-            {
-                _harmony = new Harmony("mod.bannerlord.pickitup");
-                _harmony.PatchAll(Assembly.GetExecutingAssembly());
-            }
         }
 
         protected override void OnBeforeInitialModuleScreenSetAsRoot()
         {
             base.OnBeforeInitialModuleScreenSetAsRoot();
-            
+        }
+ 
+        public override void OnGameInitializationFinished(Game game)
+        {
+            base.OnGameInitializationFinished(game);
+            var _ = Settings.Settings.Instance;
             if (_harmony == null)
             {
                 _harmony = new Harmony("mod.bannerlord.pickitup");
@@ -38,7 +35,6 @@ namespace PickItUp
         {
             base.OnMissionBehaviorInitialize(mission);
             mission.AddMissionBehavior(new PickUpWeaponBehavior());
-            // 掉落物品一直显示
             mission.AddMissionBehavior(new DroppedItemManager());
         }
     }

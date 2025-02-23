@@ -162,6 +162,7 @@ namespace PickItUp.Behaviors
             {
                 int totalCleaned = 0;
                 
+                // 清理动画追踪器中的Agent状态
                 foreach (var agent in _pickupAnimationTracker.Keys.ToList())
                 {
                     if (agent != null && agent.IsActive())
@@ -171,13 +172,23 @@ namespace PickItUp.Behaviors
                         agent.InvalidateTargetAgent();
                         agent.InvalidateAIWeaponSelections();
                     }
-                    totalCleaned += CleanupAgentData(agent);
                 }
                 
-                _lastPickupAttemptTime.Clear();
-                _lastPathCalculationTime.Clear();
+                // 清理各种字典数据
+                totalCleaned += _lastPickupAttemptTime.Count;
+                totalCleaned += _pickupAnimationTracker.Count;
+                totalCleaned += _lastPathCalculationTime.Count;
                 
-                _debugLog?.Invoke($"=== 所有内存数据已清理，共清理 {totalCleaned} 条数据 ===");
+                _lastPickupAttemptTime.Clear();
+                _pickupAnimationTracker.Clear();
+                _lastPathCalculationTime.Clear();
+                _lastCleanupTime = 0f; // 重置清理时间
+                
+                // 只有在实际清理了数据时才输出日志
+                if (totalCleaned > 0)
+                {
+                    _debugLog?.Invoke($"=== 战斗结束，清理了 {totalCleaned} 条缓存数据 ===");
+                }
             }
             catch (Exception ex)
             {

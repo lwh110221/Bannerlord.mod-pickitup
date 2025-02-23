@@ -105,12 +105,11 @@ namespace PickItUp.Patches
         {
             try
             {
-                // 如果功能被禁用，不修改HasLifeTime的值
                 if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
 
                 if (__instance?.WeaponCopy.Item != null)
                 {
-                    value = false;  // 强制设置为false，使物品永久存在
+                    value = false;  // false，使物品永久存在
                 }
                 return true;
             }
@@ -158,6 +157,31 @@ namespace PickItUp.Patches
         private const bool _isDebugMode = false;
 #endif
 
+        public override void OnRemoveBehavior()
+        {
+            try
+            {
+#if DEBUG
+                if (_isDebugMode && DroppedItemPatch._pendingActions.Count > 0)
+                {
+                    Debug.Print($"PickItUp: 清理剩余的 {DroppedItemPatch._pendingActions.Count} 个待处理操作");
+                }
+#endif
+                // 清理所有待处理的操作
+                DroppedItemPatch._pendingActions.Clear();
+                // 重置处理标志
+                DroppedItemPatch._isProcessingActions = false;
+
+                base.OnRemoveBehavior();
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                Debug.Print($"PickItUp: SafeActionProcessor清理时出错 - {ex.Message}");
+#endif
+            }
+        }
+
         public override void OnMissionTick(float dt)
         {
             if (DroppedItemPatch._pendingActions.Count > 0 && !DroppedItemPatch._isProcessingActions)
@@ -193,7 +217,6 @@ namespace PickItUp.Patches
                     DroppedItemPatch._isProcessingActions = false;
                 }
 
-                // 当队列为空时才移除行为
                 if (DroppedItemPatch._pendingActions.Count == 0)
                 {
                     Mission.Current.RemoveMissionBehavior(this);

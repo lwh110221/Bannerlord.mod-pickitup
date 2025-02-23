@@ -7,7 +7,6 @@ using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 using Path = System.IO.Path;
-using PickItUp.Settings;
 
 namespace PickItUp.Behaviors
 {
@@ -147,15 +146,6 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                // 检查冷却时间和拾取延迟
-                if (_lastPickupAttemptTime.TryGetValue(agent, out float lastAttempt))
-                {
-                    if (Mission.Current.CurrentTime < lastAttempt || Mission.Current.CurrentTime - lastAttempt < PickupCooldown)
-                    {
-                        return false;
-                    }
-                }
-
                 // 检查是否已有可用的近战武器
                 bool hasUsableMeleeWeapon = false;
                 if (agent.Equipment != null)
@@ -185,7 +175,27 @@ namespace PickItUp.Behaviors
                     }
                 }
 
-                return !hasUsableMeleeWeapon;
+                // 如果已经有可用的近战武器，就不需要捡武器
+                if (hasUsableMeleeWeapon)
+                {
+                    return false;
+                }
+                // 检查冷却时间和拾取延迟
+                if (_lastPickupAttemptTime.TryGetValue(agent, out float lastAttempt))
+                {
+                    if (Mission.Current.CurrentTime < lastAttempt || Mission.Current.CurrentTime - lastAttempt < PickupCooldown)
+                    {
+                        return false;
+                    }
+                }
+                
+                if (CCmodAct.IsExecutingCinematicAction(agent))
+                {
+                    DebugLog($"Agent {agent.Name} 需要捡武器但正在执行Cinematic Combat动作，暂时禁止拾取");
+                    return false;
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -477,7 +487,6 @@ namespace PickItUp.Behaviors
                             {
                                 try
                                 {
-                                    // 额外的安全检查
                                     if (agent.HasMount && agent.GetCurrentVelocity().Length > 5f)
                                     {
                                         DebugLog($"Agent {agent.Name} 骑马速度过快，取消拾取");
@@ -563,7 +572,7 @@ namespace PickItUp.Behaviors
                                 {
                                     TryPickupWeapon(agent, nearbyWeapon);
                                 }
-                                else if (pathDistance <= SearchRadius)  // 只在合理范围内移动
+                                else if (pathDistance <= SearchRadius)
                                 {
                                     agent.AIMoveToGameObjectEnable(nearbyWeapon, null, Agent.AIScriptedFrameFlags.NoAttack);
                                     DebugLog($"Agent {agent.Name} 移动到武器位置，路径距离: {pathDistance}");
