@@ -91,6 +91,7 @@
     <Compile Include="src\Patches\AgentPatch.cs" />
     <Compile Include="src\Behaviors\DroppedItemManager.cs" />
     <Compile Include="src\Patches\DroppedItemPatch.cs" />
+    <Compile Include="src\Behaviors\CCmodAct.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
