@@ -12,7 +12,7 @@ namespace PickItUp.Behaviors
 {
     public class DroppedItemManager : MissionBehavior
     {
-        private MBBindingList<MissionObject> _droppedItems;
+        private readonly MBBindingList<MissionObject> _droppedItems;
         private bool _lastPersistenceState;
         private float _settingCheckTimer = 0f;
         private const float SETTING_CHECK_INTERVAL = 5f; // 每5秒检查一次设置

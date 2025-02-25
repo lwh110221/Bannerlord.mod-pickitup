@@ -3,7 +3,6 @@ using HarmonyLib;
 using PickItUp.Behaviors;
 using System.Reflection;
 using TaleWorlds.Core;
-using JetBrains.Annotations;
 
 namespace PickItUp
 {
