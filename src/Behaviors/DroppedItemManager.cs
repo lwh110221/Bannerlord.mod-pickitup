@@ -1,11 +1,8 @@
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
-using System.Collections.Generic;
 using System.Linq;
-using TaleWorlds.Engine;
 using Debug = TaleWorlds.Library.Debug;
-using PickItUp.Settings;
 using System;
 
 namespace PickItUp.Behaviors

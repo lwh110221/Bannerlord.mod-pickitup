@@ -18,7 +18,7 @@ namespace PickItUp.Settings
             RequireRestart = false,
             HintText = "{=ahao_items_hint}If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On")]
         [SettingPropertyGroup("{=ahao_items_settings}Items Setting")]
-        public bool EnableWeaponPersistence { get; set; } = true;
+        public bool EnableWeaponPersistence { get; set; } = false;
 
         [SettingPropertyBool("{=ahao_show_status}Show Status Message", 
             RequireRestart = false,
@@ -36,29 +36,11 @@ namespace PickItUp.Settings
         [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 0)]
         public float SearchRadius { get; set; } = 5.0f; 
 
-        [SettingPropertyFloatingInteger("{=ahao_pickup_cooldown}Pickup Cooldown", 0.5f, 3.0f, "0.0", RequireRestart = false, 
-            HintText = "{=ahao_pickup_cooldown_hint}The interval (in seconds) between AI's pickup attempts. Default: 1.0 second", Order = 2)]
-        [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 0)]
-        public float PickupCooldown { get; set; } = 1.0f;
-
-        // [SettingPropertyFloatingInteger("{=ahao_cleanup_interval}Cleanup Interval", 10.0f, 60.0f, "0.0", RequireRestart = false, 
-        //     HintText = "{=ahao_cleanup_interval_hint}The interval (in seconds) for memory cleanup. Default: 30.0 seconds", Order = 3)]
-        // [SettingPropertyGroup("{=ahao_huancun_settings}Cache Settings - Optimizations for overall game performance, recommended to keep default", GroupOrder = 0)]
-        // public float CleanupInterval { get; set; } = 30.0f;
-
-        // [SettingPropertyFloatingInteger("{=ahao_cache_lifetime}Cache Lifetime", 30.0f, 120.0f, "0.0", RequireRestart = false, 
-        //     HintText = "{=ahao_cache_lifetime_hint}The duration (in seconds) cached data is retained. Default: 60.0 seconds", Order = 4)]
-        // [SettingPropertyGroup("{=ahao_huancun_settings}Cache Settings - Optimizations for overall game performance, recommended to keep default", GroupOrder = 0)]
-        // public float CacheLifetime { get; set; } = 60.0f;
-
         public Settings()
         {
-            EnableWeaponPersistence = true;  // 默认启用武器持久化
+            EnableWeaponPersistence = false;  // 默认启用武器持久化
             PickupDelay = 1.5f;        //懵逼时间
             SearchRadius = 5.0f;       //搜索范围
-            PickupCooldown = 1.0f;     //拾取冷却
-            // CleanupInterval = 30.0f;   //清理间隔
-            // CacheLifetime = 60.0f;     //缓存生命周期
             ShowStatusMessage = true; // 默认显示状态消息
         }
     }

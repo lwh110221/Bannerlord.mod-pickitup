@@ -1,13 +1,10 @@
 using HarmonyLib;
 using TaleWorlds.MountAndBlade;
 using PickItUp.Behaviors;
-using TaleWorlds.Engine;
 using TaleWorlds.Core;
 using System;
-using TaleWorlds.Library;
 using System.Collections.Generic;
 using Debug = TaleWorlds.Library.Debug;
-using PickItUp.Settings;
 
 namespace PickItUp.Patches
 {
