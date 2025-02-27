@@ -15,7 +15,7 @@ namespace PickItUp
             false;
 #endif
 
-        private const string LOG_PREFIX = "[AH]";
+        private const string LOG_PREFIX = "[AH-PickItUp]";
         private static readonly object _lockObj = new object();
 
         /// <summary>
@@ -85,32 +85,6 @@ namespace PickItUp
             }
 #endif
         }
-
-        /// <summary>
-        /// 输出性能调试信息
-        /// </summary>
-        /// <param name="module">模块名称</param>
-        /// <param name="operation">操作名称</param>
-        /// <param name="elapsedMs">耗时（毫秒）</param>
-        public static void LogPerformance(string module, string operation, float elapsedMs)
-        {
-#if DEBUG
-            if (elapsedMs > 16.67f) // 如果操作耗时超过一帧（假设60FPS）
-            {
-                lock (_lockObj)
-                {
-                    string timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
-                    string formattedMessage = $"{LOG_PREFIX}[{timestamp}][{module}][性能] {operation} 耗时: {elapsedMs:F2}ms";
-                    System.Diagnostics.Debug.WriteLine(formattedMessage);
-                    if (elapsedMs > 100f) // 如果耗时超过100ms，显示警告
-                    {
-                        InformationManager.DisplayMessage(new InformationMessage(formattedMessage, Colors.Blue));
-                    }
-                }
-            }
-#endif
-        }
-
         /// <summary>
         /// 检查是否处于调试模式
         /// </summary>

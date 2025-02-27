@@ -4,7 +4,7 @@ using PickItUp.Behaviors;
 using TaleWorlds.Core;
 using System;
 using System.Collections.Generic;
-using Debug = TaleWorlds.Library.Debug;
+
 
 namespace PickItUp.Patches
 {
@@ -39,7 +39,7 @@ namespace PickItUp.Patches
                     catch (Exception ex)
                     {
 #if DEBUG
-                        Debug.Print($"PickItUp: 物品注册错误 - {ex.Message}");
+                        DebugHelper.LogError("DroppedItemPatch", "物品注册错误", ex);
 #endif
                     }
                 });
@@ -52,7 +52,7 @@ namespace PickItUp.Patches
             catch (Exception ex)
             {
 #if DEBUG
-                Debug.Print($"PickItUp: 物品注册错误 - {ex.Message}");
+                DebugHelper.LogError("DroppedItemPatch", "物品注册错误", ex);
 #endif
             }
         }
@@ -113,7 +113,7 @@ namespace PickItUp.Patches
             catch (Exception ex)
             {
 #if DEBUG
-                Debug.Print($"PickItUp: HasLifeTime设置错误 - {ex.Message}");
+                DebugHelper.LogError("DroppedItemPatch", "HasLifeTime设置错误", ex);
 #endif
                 return true;
             }
@@ -137,7 +137,7 @@ namespace PickItUp.Patches
             catch (Exception ex)
             {
 #if DEBUG
-                Debug.Print($"PickItUp: 物品移除处理错误 - {ex.Message}");
+                DebugHelper.LogError("DroppedItemPatch", "物品移除处理错误", ex);
 #endif
             }
             return true;
@@ -148,20 +148,14 @@ namespace PickItUp.Patches
     {
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
-#if DEBUG
-        private const bool _isDebugMode = true;
-#else
-        private const bool _isDebugMode = false;
-#endif
-
         public override void OnRemoveBehavior()
         {
             try
             {
 #if DEBUG
-                if (_isDebugMode && DroppedItemPatch._pendingActions.Count > 0)
+                if (DroppedItemPatch._pendingActions.Count > 0)
                 {
-                    Debug.Print($"PickItUp: 清理剩余的 {DroppedItemPatch._pendingActions.Count} 个待处理操作");
+                    DebugHelper.Log("SafeActionProcessor", $"清理剩余的 {DroppedItemPatch._pendingActions.Count} 个待处理操作");
                 }
 #endif
                 // 清理所有待处理的操作
@@ -174,7 +168,7 @@ namespace PickItUp.Patches
             catch (Exception ex)
             {
 #if DEBUG
-                Debug.Print($"PickItUp: SafeActionProcessor清理时出错 - {ex.Message}");
+                DebugHelper.LogError("SafeActionProcessor", "清理时出错", ex);
 #endif
             }
         }
@@ -198,15 +192,14 @@ namespace PickItUp.Patches
 #if DEBUG
                     if (processedCount > 0)
                     {
-                        Debug.Print($"PickItUp: 本帧处理了 {processedCount} 个物品操作，" +
-                                  $"剩余 {DroppedItemPatch._pendingActions.Count} 个待处理");
+                        DebugHelper.Log("SafeActionProcessor", $"本帧处理了 {processedCount} 个物品操作，剩余 {DroppedItemPatch._pendingActions.Count} 个待处理");
                     }
 #endif
                 }
                 catch (Exception ex)
                 {
 #if DEBUG
-                    Debug.Print($"PickItUp: 安全处理器错误 - {ex.Message}");
+                    DebugHelper.LogError("SafeActionProcessor", "安全处理器错误", ex);
 #endif
                 }
                 finally

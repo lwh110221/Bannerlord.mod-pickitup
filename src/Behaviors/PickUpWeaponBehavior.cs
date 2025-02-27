@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Engine;
-using Path = System.IO.Path;
 
 namespace PickItUp.Behaviors
 {
     public class PickUpWeaponBehavior : MissionBehavior
     {
+        public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
+
         private float SearchRadius => Settings.Settings.Instance?.SearchRadius ?? 5.0f;        //搜索半径
 
         private const float PICKUP_ANIMATION_DURATION = 0.7f; // 拾取动画持续时间
@@ -21,10 +21,6 @@ namespace PickItUp.Behaviors
         private List<SpawnedItemEntity> _cachedWeapons = new List<SpawnedItemEntity>();
         private int _currentAgentIndex;
         private readonly Dictionary<Agent, float> _nextSearchTime = new Dictionary<Agent, float>();
-
-#if DEBUG
-        private readonly string _logFilePath;
-#endif
 
         private readonly Dictionary<Agent, SpawnedItemEntity> _agentTargetWeapons = new Dictionary<Agent, SpawnedItemEntity>();//目标武器
         private readonly Dictionary<Agent, float> _agentPickupTimers = new Dictionary<Agent, float>();//拾取计时器
@@ -37,27 +33,9 @@ namespace PickItUp.Behaviors
         public PickUpWeaponBehavior()
         {
 #if DEBUG
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            _logFilePath = Path.Combine(desktopPath, "PickItUp_log.txt");
-            File.WriteAllText(_logFilePath, $"=== PickItUp Mod Log Started at {DateTime.Now} ===\n");
+            DebugHelper.Log("PickUpWeapon", "=== PickItUp Mod Started ===");
 #endif
         }
-
-        private void DebugLog(string message)
-        {
-#if DEBUG
-            try
-            {
-                string logMessage = $"[{DateTime.Now:HH:mm:ss.fff}] {message}\n";
-                File.AppendAllText(_logFilePath, logMessage);
-            }
-            catch
-            {
-            }
-#endif
-        }
-
-        public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
         // 辅助方法：检查Agent是否有效
         private bool IsAgentValid(Agent agent)
@@ -80,7 +58,7 @@ namespace PickItUp.Behaviors
             }
             catch (Exception ex)
             {
-                DebugLog($"检查武器有效性时出错: {ex.Message}");
+                DebugHelper.Log("PickUpWeapon", $"检查武器有效性时出错: {ex.Message}");
                 return false;
             }
         }
@@ -183,7 +161,7 @@ namespace PickItUp.Behaviors
             }
             catch (Exception ex)
             {
-                DebugLog($"检查Agent {agent?.Name} 是否可以拾取时出错: {ex.Message}");
+                DebugHelper.Log("PickUpWeapon", $"检查Agent {agent?.Name} 是否可以拾取时出错: {ex.Message}");
                 return false;
             }
         }
@@ -286,13 +264,13 @@ namespace PickItUp.Behaviors
                             {
                                 bool removeWeapon;
                                 agent.OnItemPickup(weaponToPickup, targetSlot, out removeWeapon);
-                                DebugLog($"Agent {agent.Name} 完成拾取武器到槽位 {targetSlot}");
+                                DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 完成拾取武器到槽位 {targetSlot}");
                                 ResetAgentPickupState(agent);
                             }
                         }
                         catch (Exception ex)
                         {
-                            DebugLog($"处理拾取动画时出错: {ex.Message}");
+                            DebugHelper.Log("PickUpWeapon", $"处理拾取动画时出错: {ex.Message}");
                             ResetAgentPickupState(agent);
                         }
                     }
@@ -379,7 +357,7 @@ namespace PickItUp.Behaviors
             }
             catch (Exception ex)
             {
-                DebugLog($"OnMissionTick出错: {ex.Message}");
+                DebugHelper.Log("PickUpWeapon", $"OnMissionTick出错: {ex.Message}");
             }
         }
 
@@ -402,7 +380,7 @@ namespace PickItUp.Behaviors
             }
             catch (Exception ex)
             {
-                DebugLog($"MoveToWeapon出错: {ex.Message}");
+                DebugHelper.Log("PickUpWeapon", $"MoveToWeapon出错: {ex.Message}");
             }
         }
 
@@ -418,7 +396,7 @@ namespace PickItUp.Behaviors
                 // Equipment是否有效
                 if (agent.Equipment == null)
                 {
-                    DebugLog($"Agent {agent.Name} 的Equipment为空");
+                    DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 的Equipment为空");
                     return;
                 }
 
@@ -459,7 +437,7 @@ namespace PickItUp.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            DebugLog($"SelectWeaponPickUpSlot出错: {ex.Message}");
+                            DebugHelper.Log("PickUpWeapon", $"SelectWeaponPickUpSlot出错: {ex.Message}");
                             continue;
                         }
 
@@ -478,26 +456,26 @@ namespace PickItUp.Behaviors
                                 _agentLastPickupAttempts[agent] = Mission.Current.CurrentTime;
                                 _agentPickupTimers.Remove(agent);
 
-                                DebugLog($"Agent {agent.Name} 开始拾取动画，目标槽位: {targetSlot}，骑马状态: {agent.HasMount}");
+                                DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 开始拾取动画，目标槽位: {targetSlot}，骑马状态: {agent.HasMount}");
                                 break;
                             }
                             catch (Exception ex)
                             {
-                                DebugLog($"设置拾取动画时出错: {ex.Message}");
+                                DebugHelper.Log("PickUpWeapon", $"设置拾取动画时出错: {ex.Message}");
                                 continue;
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        DebugLog($"处理单个武器时出错: {ex.Message}");
+                        DebugHelper.Log("PickUpWeapon", $"处理单个武器时出错: {ex.Message}");
                         continue;
                     }
                 }
             }
             catch (Exception ex)
             {
-                DebugLog($"TryPickupWeapon 出错: {ex.Message}");
+                DebugHelper.Log("PickUpWeapon", $"TryPickupWeapon 出错: {ex.Message}");
             }
         }
 
@@ -518,12 +496,12 @@ namespace PickItUp.Behaviors
 
                 if (!string.IsNullOrEmpty(reason))
                 {
-                    DebugLog($"重置Agent {agent.Name} 的状态: {reason}");
+                    DebugHelper.Log("PickUpWeapon", $"重置Agent {agent.Name} 的状态: {reason}");
                 }
             }
             catch (Exception ex)
             {
-                DebugLog($"重置Agent状态时出错: {ex.Message}");
+                DebugHelper.Log("PickUpWeapon", $"重置Agent状态时出错: {ex.Message}");
             }
         }
 

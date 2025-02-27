@@ -2,7 +2,6 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using System.Linq;
-using Debug = TaleWorlds.Library.Debug;
 using System;
 
 namespace PickItUp.Behaviors
@@ -22,7 +21,7 @@ namespace PickItUp.Behaviors
         {
             if (_isDebugMode)
             {
-                Debug.Print($"PickItUp: {message}");
+                DebugHelper.Log("DroppedItemManager", message);
             }
         }
 
