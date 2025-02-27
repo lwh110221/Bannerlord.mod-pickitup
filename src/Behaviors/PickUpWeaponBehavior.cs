@@ -99,20 +99,36 @@ namespace PickItUp.Behaviors
                 return false;
             }
 
-            // 纯近战武器
-            return weaponClass == WeaponClass.OneHandedSword ||
-                   weaponClass == WeaponClass.TwoHandedSword ||
-                   weaponClass == WeaponClass.OneHandedAxe ||
-                   weaponClass == WeaponClass.TwoHandedAxe ||
-                   weaponClass == WeaponClass.Mace ||
-                   weaponClass == WeaponClass.TwoHandedMace ||
-                   weaponClass == WeaponClass.OneHandedPolearm ||
-                   weaponClass == WeaponClass.TwoHandedPolearm ||
-                   weaponClass == WeaponClass.Dagger ||
-                   // 可以用作近战武器的投掷武器
-                   weaponClass == WeaponClass.ThrowingAxe ||
-                   weaponClass == WeaponClass.ThrowingKnife ||
-                   weaponClass == WeaponClass.Javelin;
+            var settings = Settings.Settings.Instance;
+            
+            // 根据设置检查每种武器类型
+            switch (weaponClass)
+            {
+                case WeaponClass.OneHandedSword:
+                    return settings.PickupOneHandedSword;
+                case WeaponClass.TwoHandedSword:
+                    return settings.PickupTwoHandedSword;
+                case WeaponClass.OneHandedAxe:
+                    return settings.PickupOneHandedAxe;
+                case WeaponClass.TwoHandedAxe:
+                    return settings.PickupTwoHandedAxe;
+                case WeaponClass.Mace:
+                    return settings.PickupMace;
+                case WeaponClass.TwoHandedMace:
+                    return settings.PickupTwoHandedMace;
+                case WeaponClass.OneHandedPolearm:
+                    return settings.PickupOneHandedPolearm;
+                case WeaponClass.TwoHandedPolearm:
+                    return settings.PickupTwoHandedPolearm;
+                case WeaponClass.Dagger:
+                    return settings.PickupDagger;
+                case WeaponClass.ThrowingAxe:
+                case WeaponClass.ThrowingKnife:
+                case WeaponClass.Javelin:
+                    return settings.PickupThrowingWeapons;
+                default:
+                    return false;
+            }
         }
 
         private bool IsMeleeWeapon(WeaponComponent weaponComponent)
@@ -125,7 +141,6 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                // 使用辅助方法检查Agent
                 if (!IsAgentValid(agent) || !agent.IsAIControlled)
                 {
                     return false;
@@ -143,7 +158,6 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                // 检查是否是坐骑
                 if (agent.IsMount)
                 {
                     return false;
@@ -208,7 +222,6 @@ namespace PickItUp.Behaviors
             }
         }
 
-        // 使用空间分区优化的FindNearestWeapon方法
         private SpawnedItemEntity FindNearestWeapon(Agent agent)
         {
             if (agent == null) return null;
@@ -232,8 +245,8 @@ namespace PickItUp.Behaviors
             }
 
             return nearbyWeapons
-                .Where(w => w != null && 
-                          !w.IsRemoved && 
+                .Where(w => w != null &&
+                          !w.IsRemoved &&
                           w.GameEntity.GlobalPosition.Distance(agentPosition) <= SearchRadius &&
                           (!w.IsStuckMissile() || agent.CanReachAndUseObject(w, w.GameEntity.GlobalPosition.DistanceSquared(agentPosition))))
                 .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))

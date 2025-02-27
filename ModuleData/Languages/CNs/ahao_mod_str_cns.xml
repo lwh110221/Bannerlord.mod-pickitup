@@ -13,17 +13,6 @@
     
     <string id="ahao_search_radius" text="搜索范围" />
     <string id="ahao_search_radius_hint" text="AI搜索地上武器的范围（米）。默认：5.0 米" />
-    
-    <string id="ahao_pickup_cooldown" text="拾取冷却时间" />
-    <string id="ahao_pickup_cooldown_hint" text="AI两次拾取尝试之间的间隔时间（秒）。默认：1.0 秒" />
-    
-    <string id="ahao_huancun_settings" text="缓存相关-对游戏整体的优化，建议默认就行" />
-    
-    <string id="ahao_cleanup_interval" text="清理间隔" />
-    <string id="ahao_cleanup_interval_hint" text="内存清理的间隔时间（秒）。默认：30.0 秒" />
-    
-    <string id="ahao_cache_lifetime" text="缓存生命周期" />
-    <string id="ahao_cache_lifetime_hint" text="缓存数据的保留时间（秒）。默认：60.0 秒" />
 
     <string id="ahao_items" text="启用物品不消失"/>
     <string id="ahao_items_hint" text="启用后，掉落的武器将一直留在战场上。默认：开启"/>
@@ -32,10 +21,27 @@
     <string id="ahao_show_status" text="显示状态消息"/>
     <string id="ahao_show_status_hint" text="是否在进入战场时显示状态消息。默认：开启"/>
 
-    <!-- <string id="ahao_max_items" text="最大物品数量" />
-    <string id="ahao_max_items_hint" text="战场上可以同时一直存在的物品的最大数量。 更改后进入新的战斗场景才会生效。默认：200" />
-    <string id="ahao_status_msg" text="PIU：武器不消失-{STATUS}    数量上限：{COUNT}" />
-    <string id="ahao_status_on" text="已开启" />
-    <string id="ahao_status_off" text="已关闭" /> -->
+     <!-- 武器类型设置 -->
+    <string id="ahao_weapon_types" text="允许武器类型"/>
+    <string id="ahao_one_handed_sword" text="单手剑"/>
+    <string id="ahao_one_handed_sword_hint" text="允许AI拾取单手剑"/>
+    <string id="ahao_two_handed_sword" text="双手剑"/>
+    <string id="ahao_two_handed_sword_hint" text="允许AI拾取双手剑"/>
+    <string id="ahao_one_handed_axe" text="单手斧"/>
+    <string id="ahao_one_handed_axe_hint" text="允许AI拾取单手斧"/>
+    <string id="ahao_two_handed_axe" text="双手斧"/>
+    <string id="ahao_two_handed_axe_hint" text="允许AI拾取双手斧"/>
+    <string id="ahao_mace" text="短柄锤"/>
+    <string id="ahao_mace_hint" text="允许AI拾取短柄锤"/>
+    <string id="ahao_two_handed_mace" text="双手锤"/>
+    <string id="ahao_two_handed_mace_hint" text="允许AI拾取双手锤"/>
+    <string id="ahao_one_handed_polearm" text="单手长矛"/>
+    <string id="ahao_one_handed_polearm_hint" text="允许AI拾取单手长矛"/>
+    <string id="ahao_two_handed_polearm" text="双手长矛"/>
+    <string id="ahao_two_handed_polearm_hint" text="允许AI拾取双手长矛"/>
+    <string id="ahao_dagger" text="匕首"/>
+    <string id="ahao_dagger_hint" text="允许AI拾取匕首"/>
+    <string id="ahao_throwing_weapons" text="投掷武器"/>
+    <string id="ahao_throwing_weapons_hint" text="允许AI拾取投掷武器（斧头、飞刀（匕首）、标枪)"/>
   </strings>
 </base> 

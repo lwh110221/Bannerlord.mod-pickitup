@@ -9,14 +9,14 @@
     <string id="ahao_pickup_delay_hint" value="The time (in seconds) AI remains disoriented after losing weapon before attempting to pick it up. Default: 1.5 seconds" />
     <string id="ahao_search_radius" value="Search Radius" />
     <string id="ahao_search_radius_hint" value="The range (in meters) AI searches for dropped weapons. Default: 5.0 meters" />
-    <string id="ahao_pickup_cooldown" value="Pickup Cooldown" />
+    <!-- <string id="ahao_pickup_cooldown" value="Pickup Cooldown" />
     <string id="ahao_pickup_cooldown_hint" value="The interval (in seconds) between AI's pickup attempts. Default: 1.0 second" />
     <string id="ahao_cleanup_interval" value="Cleanup Interval" />
     <string id="ahao_cleanup_interval_hint" value="The interval (in seconds) for memory cleanup. Default: 30.0 seconds" />
     <string id="ahao_cache_lifetime" value="Cache Lifetime" />
     <string id="ahao_cache_lifetime_hint" value="The duration (in seconds) cached data is retained. Default: 60.0 seconds" />
     <string id="ahao_pickup_settings" value="Pickup Settings" />
-    <string id="ahao_huancun_settings" value="Cache Settings - Optimizations for overall game performance, recommended to keep default" />
+    <string id="ahao_huancun_settings" value="Cache Settings - Optimizations for overall game performance, recommended to keep default" /> -->
     <string id="ahao_items" value="Enable items do not disappear" />
     <string id="ahao_items_hint" value="If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On" />
     <string id="ahao_items_settings" value="Items Setting" />
@@ -26,5 +26,28 @@
     <!-- <string id="ahao_status_msg" value="PIU: items do not disappear -{STATUS}    Max Items: {COUNT}" />
     <string id="ahao_status_on" value="ON" />
     <string id="ahao_status_off" value="OFF" /> -->
+    
+    <!-- 武器类型设置 -->
+    <string id="ahao_weapon_types" value="Allow Weapon Types"/>
+    <string id="ahao_one_handed_sword" value="One Handed Sword"/>
+    <string id="ahao_one_handed_sword_hint" value="Allow AI to pick up one-handed swords"/>
+    <string id="ahao_two_handed_sword" value="Two Handed Sword"/>
+    <string id="ahao_two_handed_sword_hint" value="Allow AI to pick up two-handed swords"/>
+    <string id="ahao_one_handed_axe" value="One Handed Axe"/>
+    <string id="ahao_one_handed_axe_hint" value="Allow AI to pick up one-handed axes"/>
+    <string id="ahao_two_handed_axe" value="Two Handed Axe"/>
+    <string id="ahao_two_handed_axe_hint" value="Allow AI to pick up two-handed axes"/>
+    <string id="ahao_mace" value="Mace"/>
+    <string id="ahao_mace_hint" value="Allow AI to pick up maces"/>
+    <string id="ahao_two_handed_mace" value="Two Handed Mace"/>
+    <string id="ahao_two_handed_mace_hint" value="Allow AI to pick up two-handed maces"/>
+    <string id="ahao_one_handed_polearm" value="One Handed Polearm"/>
+    <string id="ahao_one_handed_polearm_hint" value="Allow AI to pick up one-handed polearms"/>
+    <string id="ahao_two_handed_polearm" value="Two Handed Polearm"/>
+    <string id="ahao_two_handed_polearm_hint" value="Allow AI to pick up two-handed polearms"/>
+    <string id="ahao_dagger" value="Dagger"/>
+    <string id="ahao_dagger_hint" value="Allow AI to pick up daggers"/>
+    <string id="ahao_throwing_weapons" value="Throwing Weapons"/>
+    <string id="ahao_throwing_weapons_hint" value="Allow AI to pick up throwing weapons (axes, knives, javelins)"/>
   </strings>
 </base>
