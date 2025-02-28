@@ -11,7 +11,7 @@ namespace PickItUp.Behaviors
         private readonly MBBindingList<MissionObject> _droppedItems;
         private bool _lastPersistenceState;
         private float _settingCheckTimer = 0f;
-        private const float SETTING_CHECK_INTERVAL = 5f; // 每5秒检查一次设置
+        private const float SETTING_CHECK_INTERVAL = 8f;
         private bool _hasDisplayedMessage = false;
 
 #if DEBUG
@@ -32,16 +32,16 @@ namespace PickItUp.Behaviors
             debugInfo += $"\n - 当前注册物品数量: {_droppedItems.Count}";
             debugInfo += $"\n - 有生命周期: {spawnedItem.HasLifeTime}";
             debugInfo += $"\n - 是否永久存在: {spawnedItem.IsDisabled}";
-            
+
             if (spawnedItem.WeaponCopy.Item != null)
             {
                 debugInfo += $"\n - 物品类型: {GetItemType(spawnedItem.WeaponCopy.Item)}";
             }
-            
+
             return debugInfo;
         }
 #endif
-        
+
         public DroppedItemManager()
         {
             _droppedItems = new MBBindingList<MissionObject>();
@@ -70,10 +70,10 @@ namespace PickItUp.Behaviors
             if (!_hasDisplayedMessage && Settings.Settings.Instance.ShowStatusMessage)
             {
                 _hasDisplayedMessage = true;
-                
+
                 string statusEN = Settings.Settings.Instance.EnableWeaponPersistence ? "ON" : "OFF";
                 string statusCN = Settings.Settings.Instance.EnableWeaponPersistence ? "已开启" : "已关闭";
-                
+
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"PIU: Weapon do not disappear-{statusEN}",
                     Colors.Yellow));
@@ -100,13 +100,12 @@ namespace PickItUp.Behaviors
                 }
                 _droppedItems.Clear();
             }
-            // 当设置开启时，不做任何操作，让新的掉落物品自然进入系统
         }
 
         private string GetItemType(ItemObject item)
         {
             if (item == null) return "未知";
-            
+
             switch (item.ItemType)
             {
                 case ItemObject.ItemTypeEnum.Arrows:
@@ -149,7 +148,7 @@ namespace PickItUp.Behaviors
             if (item != null && !_droppedItems.Contains(item))
             {
                 _droppedItems.Add(item);
-                
+
                 if (item is SpawnedItemEntity spawnedItem)
                 {
                     spawnedItem.SetDisabled(false);
@@ -167,7 +166,7 @@ namespace PickItUp.Behaviors
             if (item != null && _droppedItems.Contains(item))
             {
                 _droppedItems.Remove(item);
-                
+
 #if DEBUG
                 if (item is SpawnedItemEntity spawnedItem)
                 {
@@ -204,7 +203,6 @@ namespace PickItUp.Behaviors
                     {
                         if (item is SpawnedItemEntity spawnedItem)
                         {
-                            // 确保物品可以被游戏正常清理
                             spawnedItem.HasLifeTime = true;
                             spawnedItem.SetDisabled(true);
 #if DEBUG
@@ -221,10 +219,7 @@ namespace PickItUp.Behaviors
                     }
                 }
 
-                // 清空列表
                 _droppedItems.Clear();
-                
-                // 调用基类的清理
                 base.OnRemoveBehavior();
 
 #if DEBUG
@@ -239,4 +234,4 @@ namespace PickItUp.Behaviors
             }
         }
     }
-} 
+}

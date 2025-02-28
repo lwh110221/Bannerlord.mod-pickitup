@@ -21,6 +21,19 @@
     <string id="ahao_show_status" text="显示状态消息"/>
     <string id="ahao_show_status_hint" text="是否在进入战场时显示状态消息。默认：开启"/>
 
+    <!-- 不消失物品类型设置 -->
+    <string id="ahao_persistence_types" text="不消失物品类型"/>
+    <string id="ahao_persist_melee" text="近战武器"/>
+    <string id="ahao_persist_melee_hint" text="保持近战武器（剑、斧、锤等）在战场上不消失"/>
+    <string id="ahao_persist_ranged" text="远程武器"/>
+    <string id="ahao_persist_ranged_hint" text="保持远程武器（弓、弩）在战场上不消失"/>
+    <string id="ahao_persist_thrown" text="投掷武器"/>
+    <string id="ahao_persist_thrown_hint" text="保持投掷武器在战场上不消失"/>
+    <string id="ahao_persist_ammo" text="弹药"/>
+    <string id="ahao_persist_ammo_hint" text="保持弹药（箭矢、弩箭等）在战场上不消失"/>
+    <string id="ahao_persist_shield" text="盾牌"/>
+    <string id="ahao_persist_shield_hint" text="保持盾牌在战场上不消失"/>
+
      <!-- 武器类型设置 -->
     <string id="ahao_weapon_types" text="允许武器类型"/>
     <string id="ahao_one_handed_sword" text="单手剑"/>
@@ -42,6 +55,6 @@
     <string id="ahao_dagger" text="匕首"/>
     <string id="ahao_dagger_hint" text="允许AI拾取匕首"/>
     <string id="ahao_throwing_weapons" text="投掷武器"/>
-    <string id="ahao_throwing_weapons_hint" text="允许AI拾取投掷武器（斧头、飞刀（匕首）、标枪)"/>
+    <string id="ahao_throwing_weapons_hint" text="允许AI拾取投掷武器（斧头、飞刀、标枪)"/>
   </strings>
 </base> 

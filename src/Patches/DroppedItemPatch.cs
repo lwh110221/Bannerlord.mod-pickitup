@@ -12,8 +12,48 @@ namespace PickItUp.Patches
     public class DroppedItemPatch
     {
         internal static readonly Queue<Action> _pendingActions = new Queue<Action>();
-        internal static bool _isProcessingActions = false;
-        internal const int MAX_ACTIONS_PER_TICK = 10;  // 每帧最多处理的动作数量
+        internal static bool _isProcessingActions = false; // 是否正在处理动作
+        internal const int MAX_ACTIONS_PER_TICK = 10;      // 每帧最多处理的动作数
+
+        private static bool ShouldPersistWeapon(ItemObject item)
+        {
+            if (item == null) return false;
+            var settings = Settings.Settings.Instance;
+
+            // 检查武器类型
+            switch (item.ItemType)
+            {
+                // 近战武器
+                case ItemObject.ItemTypeEnum.OneHandedWeapon:
+                case ItemObject.ItemTypeEnum.TwoHandedWeapon:
+                case ItemObject.ItemTypeEnum.Polearm:
+                    return settings.PersistMeleeWeapons;
+
+                // 远程武器
+                case ItemObject.ItemTypeEnum.Bow:
+                case ItemObject.ItemTypeEnum.Crossbow:
+                case ItemObject.ItemTypeEnum.Pistol:
+                case ItemObject.ItemTypeEnum.Musket:
+                    return settings.PersistRangedWeapons;
+
+                // 投掷武器
+                case ItemObject.ItemTypeEnum.Thrown:
+                    return settings.PersistThrownWeapons;
+
+                // 弹药
+                case ItemObject.ItemTypeEnum.Arrows:
+                case ItemObject.ItemTypeEnum.Bolts:
+                case ItemObject.ItemTypeEnum.Bullets:
+                    return settings.PersistAmmunition;
+
+                // 盾牌
+                case ItemObject.ItemTypeEnum.Shield:
+                    return settings.PersistShields;
+
+                default:
+                    return false;
+            }
+        }
 
         [HarmonyPatch(typeof(SpawnedItemEntity), MethodType.Constructor)]
         [HarmonyPostfix]
@@ -25,6 +65,9 @@ namespace PickItUp.Patches
                 if (!Settings.Settings.Instance.EnableWeaponPersistence) return;
 
                 if (__instance?.WeaponCopy.Item == null || Mission.Current == null) return;
+
+                // 检查武器类型是否应该持久化
+                if (!ShouldPersistWeapon(__instance.WeaponCopy.Item)) return;
 
                 var manager = Mission.Current.GetMissionBehavior<DroppedItemManager>();
                 if (manager == null) return;
@@ -57,45 +100,6 @@ namespace PickItUp.Patches
             }
         }
 
-        private static string GetItemType(ItemObject item)
-        {
-            if (item == null) return "未知";
-            
-            switch (item.ItemType)
-            {
-                case ItemObject.ItemTypeEnum.Arrows:
-                    return "箭矢";
-                case ItemObject.ItemTypeEnum.Bolts:
-                    return "弩箭";
-                case ItemObject.ItemTypeEnum.Thrown:
-                    return "投掷武器";
-                case ItemObject.ItemTypeEnum.OneHandedWeapon:
-                    return "单手武器";
-                case ItemObject.ItemTypeEnum.TwoHandedWeapon:
-                    return "双手武器";
-                case ItemObject.ItemTypeEnum.Polearm:
-                    return "长杆武器";
-                case ItemObject.ItemTypeEnum.Shield:
-                    return "盾牌";
-                case ItemObject.ItemTypeEnum.Bow:
-                    return "弓";
-                case ItemObject.ItemTypeEnum.Crossbow:
-                    return "弩";
-                case ItemObject.ItemTypeEnum.Pistol:
-                    return "手枪";
-                case ItemObject.ItemTypeEnum.Musket:
-                    return "火枪";
-                case ItemObject.ItemTypeEnum.Bullets:
-                    return "子弹";
-                case ItemObject.ItemTypeEnum.Banner:
-                    return "旗帜";
-                case ItemObject.ItemTypeEnum.Invalid:
-                    return "无效物品";
-                default:
-                    return $"其他物品({item.ItemType})";
-            }
-        }
-
         [HarmonyPatch(typeof(SpawnedItemEntity), "HasLifeTime", MethodType.Setter)]
         [HarmonyPrefix]
         public static bool HasLifeTimeSetterPrefix(SpawnedItemEntity __instance, ref bool value)
@@ -104,7 +108,7 @@ namespace PickItUp.Patches
             {
                 if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
 
-                if (__instance?.WeaponCopy.Item != null)
+                if (__instance?.WeaponCopy.Item != null && ShouldPersistWeapon(__instance.WeaponCopy.Item))
                 {
                     value = false;  // false，使物品永久存在
                 }
@@ -129,7 +133,8 @@ namespace PickItUp.Patches
                 if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
 
                 if (missionObject is SpawnedItemEntity spawnedItem && 
-                    spawnedItem.WeaponCopy.Item != null)
+                    spawnedItem.WeaponCopy.Item != null &&
+                    ShouldPersistWeapon(spawnedItem.WeaponCopy.Item))
                 {
                     return false;  // 阻止执行原方法
                 }

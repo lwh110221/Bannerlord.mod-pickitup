@@ -23,9 +23,20 @@
     <string id="ahao_max_items" value="Maximum Items" />
     <string id="ahao_show_status" value="Show Status Message"/>
     <string id="ahao_show_status_hint" value="Whether to display status messages when entering the battlefield. Default: On"/>
-    <!-- <string id="ahao_status_msg" value="PIU: items do not disappear -{STATUS}    Max Items: {COUNT}" />
-    <string id="ahao_status_on" value="ON" />
-    <string id="ahao_status_off" value="OFF" /> -->
+
+    <!-- 不消失物品类型设置 -->
+    <string id="ahao_persistence_types" value="Non-disappearing item types"/>
+    <string id="ahao_persist_melee" value="Melee Weapons"/>
+    <string id="ahao_persist_melee_hint" value="Keep melee weapons (swords, axes, maces, etc.) do not disappear on battlefield"/>
+    <string id="ahao_persist_ranged" value="Ranged Weapons"/>
+    <string id="ahao_persist_ranged_hint" value="Keep ranged weapons (bows, crossbows) do not disappear on battlefield"/>
+    <string id="ahao_persist_thrown" value="Throwing Weapons"/>
+    <string id="ahao_persist_thrown_hint" value="Keep throwing weapons do not disappear on battlefield"/>
+    <string id="ahao_persist_ammo" value="Ammunition"/>
+    <string id="ahao_persist_ammo_hint" value="Keep ammunition (arrows, bolts, etc.) do not disappear on battlefield"/>
+    <string id="ahao_persist_shield" value="Shields"/>
+    <string id="ahao_persist_shield_hint" value="Keep shields do not disappear on battlefield"/>
+    
     
     <!-- 武器类型设置 -->
     <string id="ahao_weapon_types" value="Allow Weapon Types"/>

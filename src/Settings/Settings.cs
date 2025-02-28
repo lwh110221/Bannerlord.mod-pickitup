@@ -87,12 +87,43 @@ namespace PickItUp.Settings
             HintText = "{=ahao_throwing_weapons_hint}Allow AI to pick up throwing weapons (axes, knives, javelins)", Order = 9)]
         public bool PickupThrowingWeapons { get; set; } = true;
 
+        // 武器持久化类型设置
+        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types", GroupOrder = 4)]
+        [SettingPropertyBool("{=ahao_persist_melee}Melee Weapons", RequireRestart = false,
+            HintText = "{=ahao_persist_melee_hint}Keep melee weapons (swords, axes, maces, etc.) do not disappear on battlefield", Order = 0)]
+        public bool PersistMeleeWeapons { get; set; } = true;
+
+        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types")]
+        [SettingPropertyBool("{=ahao_persist_ranged}Ranged Weapons", RequireRestart = false,
+            HintText = "{=ahao_persist_ranged_hint}Keep ranged weapons (bows, crossbows) do not disappear on battlefield", Order = 1)]
+        public bool PersistRangedWeapons { get; set; } = true;
+
+        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types")]
+        [SettingPropertyBool("{=ahao_persist_thrown}Throwing Weapons", RequireRestart = false,
+            HintText = "{=ahao_persist_thrown_hint}Keep throwing weapons do not disappear on battlefield", Order = 2)]
+        public bool PersistThrownWeapons { get; set; } = true;
+
+        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types")]
+        [SettingPropertyBool("{=ahao_persist_ammo}Ammunition", RequireRestart = false,
+            HintText = "{=ahao_persist_ammo_hint}Keep ammunition (arrows, bolts, etc.) do not disappear on battlefield", Order = 3)]
+        public bool PersistAmmunition { get; set; } = true;
+
+        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types")]
+        [SettingPropertyBool("{=ahao_persist_shield}Shields", RequireRestart = false,
+            HintText = "{=ahao_persist_shield_hint}Keep shields do not disappear on battlefield", Order = 4)]
+        public bool PersistShields { get; set; } = true;
+
         public Settings()
         {
             EnableWeaponPersistence = false;  // 默认启用武器持久化
             PickupDelay = 1.5f;        //懵逼时间
             SearchRadius = 5.0f;       //搜索范围
-            ShowStatusMessage = true; // 默认显示状态消息
+            ShowStatusMessage = true;   // 默认显示状态消息
+            PersistMeleeWeapons = true;
+            PersistRangedWeapons = true;
+            PersistThrownWeapons = true;
+            PersistAmmunition = true;
+            PersistShields = true;
         }
     }
 } 
