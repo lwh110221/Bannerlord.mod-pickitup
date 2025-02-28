@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Module>
-    <Name value="Pick It Up"/>
+    <Name value="Pick It Up-no-shield"/>
     <Id value="PickItUp"/>
-    <Version value="v1.1.3"/>
+    <Version value="v1.2.0"/>
+    <author value="Ahao221"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>
     <DependedModules>
@@ -12,7 +13,6 @@
         <DependedModule Id="CustomBattle" DependentVersion="v1.2.x"/>
         <DependedModule Id="StoryMode" DependentVersion="v1.2.x"/>
         <DependedModule Id="Bannerlord.Harmony" />
-        <DependedModule Id="Bannerlord.ButterLib" />
         <DependedModule Id="Bannerlord.MBOptionScreen" DependentVersion="v5.10.1"/>
     </DependedModules>
     <SubModules>
