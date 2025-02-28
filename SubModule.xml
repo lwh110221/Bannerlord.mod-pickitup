@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Module>
-    <Name value="Pick It Up-no-shield"/>
+    <Name value="Pick It Up"/>
     <Id value="PickItUp"/>
     <Version value="v1.2.0"/>
     <author value="Ahao221"/>

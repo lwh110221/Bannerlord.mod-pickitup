@@ -14,11 +14,12 @@ namespace PickItUp.Behaviors
         private float SearchRadius => Settings.Settings.Instance?.SearchRadius ?? 5.0f;        //搜索半径
 
         private const float PICKUP_ANIMATION_DURATION = 0.7f; // 拾取动画持续时间
-        private const int MAX_AGENTS_PER_TICK = 8;
+        private const int MAX_AGENTS_PER_TICK = 8;  // 每tick处理的最大AI数量
         private const float WEAPON_CACHE_UPDATE_INTERVAL = 0.5f; // 武器缓存更新间隔
+        private const int INITIAL_LIST_CAPACITY = 32;
 
         private float _lastWeaponCacheUpdateTime;
-        private List<SpawnedItemEntity> _cachedWeapons = new List<SpawnedItemEntity>();
+        private readonly List<SpawnedItemEntity> _cachedWeapons = new List<SpawnedItemEntity>(INITIAL_LIST_CAPACITY);
         private int _currentAgentIndex;
         private readonly Dictionary<Agent, float> _nextSearchTime = new Dictionary<Agent, float>();
 
@@ -29,12 +30,33 @@ namespace PickItUp.Behaviors
 
         private const float SPATIAL_CELL_SIZE = 15f;                                                     //空间分区大小
         private readonly Dictionary<(int x, int z), List<SpawnedItemEntity>> _spatialWeaponCache = new Dictionary<(int x, int z), List<SpawnedItemEntity>>();
+        private readonly Stack<List<SpawnedItemEntity>> _listPool = new Stack<List<SpawnedItemEntity>>();
 
         public PickUpWeaponBehavior()
         {
+            // 预先创建一些List对象放入对象池
+            for (int i = 0; i < 10; i++)
+            {
+                _listPool.Push(new List<SpawnedItemEntity>(INITIAL_LIST_CAPACITY));
+            }
 #if DEBUG
             DebugHelper.Log("PickUpWeapon", "=== PickItUp Mod Started ===");
 #endif
+        }
+
+        private List<SpawnedItemEntity> GetListFromPool()
+        {
+            if (_listPool.Count > 0)
+            {
+                return _listPool.Pop();
+            }
+            return new List<SpawnedItemEntity>(INITIAL_LIST_CAPACITY);
+        }
+
+        private void ReturnListToPool(List<SpawnedItemEntity> list)
+        {
+            list.Clear();
+            _listPool.Push(list);
         }
 
         // 辅助方法：检查Agent是否有效
@@ -66,6 +88,19 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
+                var settings = Settings.Settings.Instance;
+                
+                // 检查是否为盾牌，且是否有任何近战武器被启用
+                if (weaponClass == WeaponClass.SmallShield || weaponClass == WeaponClass.LargeShield)
+                {
+                    // 如果没有任何单手武器被启用，就不允许拾取盾牌
+                    return settings.PickupOneHandedSword || 
+                           settings.PickupOneHandedAxe || 
+                           settings.PickupMace || 
+                           settings.PickupOneHandedPolearm || 
+                           settings.PickupDagger;
+                }
+
                 return IsMeleeWeapon(spawnedItem.WeaponCopy.Item.WeaponComponent);
             }
             catch (Exception ex)
@@ -79,20 +114,18 @@ namespace PickItUp.Behaviors
 
         private bool CanBeUsedAsMeleeWeapon(WeaponClass weaponClass)
         {
-            // 排除所有远程武器、弹药和盾牌
+            // 排除所有远程武器和弹药
             if (weaponClass == WeaponClass.Arrow ||
                 weaponClass == WeaponClass.Bolt ||
                 weaponClass == WeaponClass.Stone ||
                 weaponClass == WeaponClass.Bow ||
-                weaponClass == WeaponClass.Crossbow ||
-                weaponClass == WeaponClass.SmallShield ||
-                weaponClass == WeaponClass.LargeShield)
+                weaponClass == WeaponClass.Crossbow)
             {
                 return false;
             }
 
             var settings = Settings.Settings.Instance;
-
+            
             // 根据设置检查每种武器类型
             switch (weaponClass)
             {
@@ -118,6 +151,9 @@ namespace PickItUp.Behaviors
                 case WeaponClass.ThrowingKnife:
                 case WeaponClass.Javelin:
                     return settings.PickupThrowingWeapons;
+                case WeaponClass.SmallShield:
+                case WeaponClass.LargeShield:
+                    return true; // 允许拾取盾牌
                 default:
                     return false;
             }
@@ -135,6 +171,67 @@ namespace PickItUp.Behaviors
             return agent.Character.IsSoldier || agent.Character.IsHero;
         }
 
+        private void UpdateWeaponStatus(WeaponClass weaponClass, ref bool hasShield, ref bool hasSingleHandedWeapon, ref bool hasTwoHandedWeapon)
+        {
+            if (IsShield(weaponClass))
+            {
+                hasShield = true;
+            }
+            else if (IsSingleHandedWeapon(weaponClass))
+            {
+                hasSingleHandedWeapon = true;
+            }
+            else if (weaponClass == WeaponClass.TwoHandedSword || 
+                     weaponClass == WeaponClass.TwoHandedAxe || 
+                     weaponClass == WeaponClass.TwoHandedMace || 
+                     weaponClass == WeaponClass.TwoHandedPolearm)
+            {
+                hasTwoHandedWeapon = true;
+            }
+        }
+
+        private (bool hasShield, bool hasSingleHandedWeapon, bool hasTwoHandedWeapon) GetAgentWeaponStatus(Agent agent)
+        {
+            bool hasShield = false;
+            bool hasSingleHandedWeapon = false;
+            bool hasTwoHandedWeapon = false;
+
+            if (agent?.Equipment != null)
+            {
+                // 检查当前装备
+                for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
+                {
+                    var equipment = agent.Equipment[i];
+                    if (!equipment.IsEmpty)
+                    {
+                        var item = equipment.Item;
+                        if (item?.WeaponComponent != null)
+                        {
+                            var weaponClass = item.WeaponComponent.PrimaryWeapon.WeaponClass;
+                            
+                            // 如果是投掷武器，检查数量
+                            bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
+                                                  weaponClass == WeaponClass.ThrowingKnife ||
+                                                  weaponClass == WeaponClass.Javelin;
+
+                            if (!isThrowingWeapon || (isThrowingWeapon && equipment.Amount > 0))
+                            {
+                                UpdateWeaponStatus(weaponClass, ref hasShield, ref hasSingleHandedWeapon, ref hasTwoHandedWeapon);
+                            }
+                            
+                            // 如果已经找到双手武器，可以提前退出
+                            if (hasTwoHandedWeapon)
+                            {
+                                return (hasShield, hasSingleHandedWeapon, true);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon);
+        }
+
         private bool CanAgentPickup(Agent agent)
         {
             try
@@ -144,8 +241,7 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                // 过滤非战斗单位
-                if (!IsRegularTroop(agent))
+                if (!IsRegularTroop(agent) || agent.IsMount)
                 {
                     return false;
                 }
@@ -162,38 +258,38 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                if (agent.IsMount)
+                // 检查是否正在进行拾取动画
+                if (_pickupAnimationTracker.TryGetValue(agent, out var pickupInfo))
+                {
+                    float currentTime = Mission.Current.CurrentTime;
+                    float animationTime = currentTime - pickupInfo.StartTime;
+
+                    // 如果动画还在进行中，不允许新的拾取
+                    if (animationTime <= PICKUP_ANIMATION_DURATION)
+                    {
+                        return false;
+                    }
+                }
+
+                var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
+
+                // 如果有双手武器，不允许拾取任何武器
+                if (hasTwoHandedWeapon)
                 {
                     return false;
                 }
 
-                // 检查是否已有可用的近战武器
-                if (agent.Equipment != null)
-                {
-                    for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
-                    {
-                        var equipment = agent.Equipment[i];
-                        if (!equipment.IsEmpty && equipment.Item?.WeaponComponent != null)
-                        {
-                            var weaponClass = equipment.Item.WeaponComponent.PrimaryWeapon.WeaponClass;
-                            
-                            // 如果是投掷武器，检查数量
-                            bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
-                                                  weaponClass == WeaponClass.ThrowingKnife ||
-                                                  weaponClass == WeaponClass.Javelin;
+                // 检查当前装备槽位中是否有任何可用武器
+                bool hasAnyUsableWeapon = hasSingleHandedWeapon || hasTwoHandedWeapon;
 
-                            if (!isThrowingWeapon || (isThrowingWeapon && equipment.Amount > 0))
-                            {
-                                if (IsMeleeWeapon(equipment.Item.WeaponComponent))
-                                {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
+                // 如果没有任何可用武器，允许拾取
+                if (!hasAnyUsableWeapon)
+                {
+                    return true;
                 }
 
-                return true;
+                // 如果只有单手武器且没有盾牌，允许拾取盾牌
+                return hasSingleHandedWeapon && !hasShield;
             }
             catch (Exception ex)
             {
@@ -204,7 +300,6 @@ namespace PickItUp.Behaviors
             }
         }
 
-        // 更新武器缓存
         private void UpdateWeaponCache()
         {
             float currentTime = Mission.Current.CurrentTime;
@@ -215,6 +310,12 @@ namespace PickItUp.Behaviors
 
             _lastWeaponCacheUpdateTime = currentTime;
             _cachedWeapons.Clear();
+
+            // 清理并回收所有List到对象池
+            foreach (var lists in _spatialWeaponCache.Values)
+            {
+                ReturnListToPool(lists);
+            }
             _spatialWeaponCache.Clear();
 
             foreach (var missionObject in Mission.Current.MissionObjects)
@@ -228,11 +329,12 @@ namespace PickItUp.Behaviors
                     var cellZ = (int)(position.z / SPATIAL_CELL_SIZE);
                     var cell = (cellX, cellZ);
 
-                    if (!_spatialWeaponCache.ContainsKey(cell))
+                    if (!_spatialWeaponCache.TryGetValue(cell, out var weaponList))
                     {
-                        _spatialWeaponCache[cell] = new List<SpawnedItemEntity>();
+                        weaponList = GetListFromPool();
+                        _spatialWeaponCache[cell] = weaponList;
                     }
-                    _spatialWeaponCache[cell].Add(spawnedItem);
+                    weaponList.Add(spawnedItem);
                 }
             }
         }
@@ -245,6 +347,7 @@ namespace PickItUp.Behaviors
             var cellX = (int)(agentPosition.x / SPATIAL_CELL_SIZE);
             var cellZ = (int)(agentPosition.z / SPATIAL_CELL_SIZE);
 
+            // 搜索周围9个格子
             var nearbyWeapons = new List<SpawnedItemEntity>();
             for (int dx = -1; dx <= 1; dx++)
             {
@@ -258,13 +361,50 @@ namespace PickItUp.Behaviors
                 }
             }
 
-            return nearbyWeapons
+            // 过滤有效武器
+            var validWeapons = nearbyWeapons
                 .Where(w => w != null &&
                           !w.IsRemoved &&
                           w.GameEntity.GlobalPosition.Distance(agentPosition) <= SearchRadius &&
                           (!w.IsStuckMissile() || agent.CanReachAndUseObject(w, w.GameEntity.GlobalPosition.DistanceSquared(agentPosition))))
-                .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
-                .FirstOrDefault();
+                .ToList();
+
+            if (validWeapons.Count == 0) return null;
+
+            var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
+
+            // 如果有双手武器，不允许拾取任何武器
+            if (hasTwoHandedWeapon)
+            {
+                return null;
+            }
+
+            // 如果AI只有盾牌没有武器，找任何非盾牌武器
+            if (hasShield && !hasSingleHandedWeapon)
+            {
+                return validWeapons
+                    .Where(w => !IsShield(w.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass))
+                    .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
+                    .FirstOrDefault();
+            }
+            // 如果AI有单手武器且没有盾牌，找盾牌
+            else if (hasSingleHandedWeapon && !hasShield)
+            {
+                return validWeapons
+                    .Where(w => IsShield(w.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass))
+                    .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
+                    .FirstOrDefault();
+            }
+            // 如果AI没有武器，找任何非盾牌武器
+            else if (!hasSingleHandedWeapon && !hasShield)
+            {
+                return validWeapons
+                    .Where(w => !IsShield(w.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass))
+                    .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
+                    .FirstOrDefault();
+            }
+
+            return null;
         }
 
         public override void OnMissionTick(float dt)
@@ -379,7 +519,7 @@ namespace PickItUp.Behaviors
                             }
                         }
 
-                        _nextSearchTime[agent] = currentTime + 0.2f; // 下次搜索时间
+                        _nextSearchTime[agent] = currentTime + 0.2f; // 设置下次搜索时间
                     }
 
                     processedCount++;
@@ -524,9 +664,7 @@ namespace PickItUp.Behaviors
             }
             catch (Exception ex)
             {
-#if DEBUG
                 DebugHelper.Log("PickUpWeapon", $"TryPickupWeapon 出错: {ex.Message}");
-#endif
             }
         }
 
@@ -563,11 +701,71 @@ namespace PickItUp.Behaviors
 
         public override void OnAgentDeleted(Agent affectedAgent)
         {
-            base.OnAgentDeleted(affectedAgent);
-            _agentPickupTimers.Remove(affectedAgent);
-            _agentLastPickupAttempts.Remove(affectedAgent);
-            _agentTargetWeapons.Remove(affectedAgent);
-            _pickupAnimationTracker.Remove(affectedAgent);
+            if (affectedAgent == null) return;
+
+            try
+            {
+                _nextSearchTime.Remove(affectedAgent);
+                _agentTargetWeapons.Remove(affectedAgent);
+                _agentPickupTimers.Remove(affectedAgent);
+                _agentLastPickupAttempts.Remove(affectedAgent);
+                _pickupAnimationTracker.Remove(affectedAgent);
+
+                base.OnAgentDeleted(affectedAgent);
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", $"清理Agent状态时出错: {ex.Message}");
+#endif
+            }
+        }
+
+        protected override void OnEndMission()
+        {
+            try
+            {
+                // 清理所有缓存和对象池
+                _cachedWeapons.Clear();
+                _nextSearchTime.Clear();
+                _agentTargetWeapons.Clear();
+                _agentPickupTimers.Clear();
+                _agentLastPickupAttempts.Clear();
+                _pickupAnimationTracker.Clear();
+
+                // 清理空间分区缓存
+                foreach (var lists in _spatialWeaponCache.Values)
+                {
+                    lists.Clear();
+                }
+                _spatialWeaponCache.Clear();
+                _listPool.Clear();
+
+                base.OnEndMission();
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", $"清理Mission结束状态时出错: {ex.Message}");
+#endif
+            }
+        }
+
+        private bool IsShield(WeaponClass weaponClass)
+        {
+            return weaponClass == WeaponClass.SmallShield || weaponClass == WeaponClass.LargeShield;
+        }
+
+        private bool IsSingleHandedWeapon(WeaponClass weaponClass)
+        {
+            return weaponClass == WeaponClass.OneHandedSword || 
+                   weaponClass == WeaponClass.OneHandedAxe || 
+                   weaponClass == WeaponClass.Mace || 
+                   weaponClass == WeaponClass.OneHandedPolearm || 
+                   weaponClass == WeaponClass.Dagger ||
+                   weaponClass == WeaponClass.ThrowingAxe ||
+                   weaponClass == WeaponClass.ThrowingKnife ||
+                   weaponClass == WeaponClass.Javelin;
         }
     }
 }
