@@ -53,6 +53,9 @@ namespace PickItUp.Behaviors
         // 新增: 用于快速检查是否有掉落武器
         private bool _hasDroppedWeapons;
 
+        private readonly HashSet<SpawnedItemEntity> _previousWeapons = new HashSet<SpawnedItemEntity>();
+        private readonly Dictionary<SpawnedItemEntity, (int x, int z)> _weaponCellCache = new Dictionary<SpawnedItemEntity, (int x, int z)>();
+
         public PickUpWeaponBehavior()
         {
             // 预先创建一些List对象放入对象池
@@ -317,6 +320,71 @@ namespace PickItUp.Behaviors
             }
         }
 
+        private void AddWeaponToCache(SpawnedItemEntity weapon)
+        {
+            try
+            {
+                if (weapon == null || weapon.GameEntity == null) return;
+
+                var position = weapon.GameEntity.GlobalPosition;
+                var cellX = (int)(position.x / SPATIAL_CELL_SIZE);
+                var cellZ = (int)(position.z / SPATIAL_CELL_SIZE);
+                var cell = (cellX, cellZ);
+
+                if (!_spatialWeaponCache.TryGetValue(cell, out var weaponList))
+                {
+                    weaponList = GetListFromPool();
+                    _spatialWeaponCache[cell] = weaponList;
+                }
+
+                if (!weaponList.Contains(weapon))
+                {
+                    weaponList.Add(weapon);
+                    _weaponCellCache[weapon] = cell;
+                    _hasDroppedWeapons = true;
+                }
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", $"AddWeaponToCache出错: {ex.Message}");
+#endif
+            }
+        }
+
+        private void RemoveWeaponFromCache(SpawnedItemEntity weapon)
+        {
+            try
+            {
+                if (weapon == null) return;
+
+                if (_weaponCellCache.TryGetValue(weapon, out var cell))
+                {
+                    if (_spatialWeaponCache.TryGetValue(cell, out var weaponList))
+                    {
+                        weaponList.Remove(weapon);
+                        
+                        // 如果列表为空，返回到对象池
+                        if (weaponList.Count == 0)
+                        {
+                            _spatialWeaponCache.Remove(cell);
+                            ReturnListToPool(weaponList);
+                        }
+                    }
+                    _weaponCellCache.Remove(weapon);
+                }
+
+                // 检查是否还有任何武器
+                _hasDroppedWeapons = _spatialWeaponCache.Any(x => x.Value.Count > 0);
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", $"RemoveWeaponFromCache出错: {ex.Message}");
+#endif
+            }
+        }
+
         private void UpdateWeaponCache()
         {
             float currentTime = Mission.Current.CurrentTime;
@@ -326,34 +394,90 @@ namespace PickItUp.Behaviors
             }
 
             _lastWeaponCacheUpdateTime = currentTime;
-            _cachedWeapons.Clear();
-            _hasDroppedWeapons = false;
+            var currentWeapons = new HashSet<SpawnedItemEntity>();
 
-            foreach (var lists in _spatialWeaponCache.Values)
+            try
             {
-                ReturnListToPool(lists);
-            }
-            _spatialWeaponCache.Clear();
-
-            foreach (var missionObject in Mission.Current.MissionObjects)
-            {
-                if (missionObject is SpawnedItemEntity spawnedItem && IsValidWeapon(spawnedItem))
+                foreach (var missionObject in Mission.Current.MissionObjects)
                 {
-                    _hasDroppedWeapons = true;
-                    _cachedWeapons.Add(spawnedItem);
-
-                    var position = spawnedItem.GameEntity.GlobalPosition;
-                    var cellX = (int)(position.x / SPATIAL_CELL_SIZE);
-                    var cellZ = (int)(position.z / SPATIAL_CELL_SIZE);
-                    var cell = (cellX, cellZ);
-
-                    if (!_spatialWeaponCache.TryGetValue(cell, out var weaponList))
+                    if (missionObject is SpawnedItemEntity spawnedItem)
                     {
-                        weaponList = GetListFromPool();
-                        _spatialWeaponCache[cell] = weaponList;
+                        // 检查武器是否有效
+                        if (IsValidWeapon(spawnedItem))
+                        {
+                            currentWeapons.Add(spawnedItem);
+                            
+                            // 如果是新武器，添加到缓存
+                            if (!_previousWeapons.Contains(spawnedItem))
+                            {
+                                AddWeaponToCache(spawnedItem);
+                            }
+                            // 如果武器位置发生变化，更新缓存
+                            else if (_weaponCellCache.TryGetValue(spawnedItem, out var oldCell))
+                            {
+                                var position = spawnedItem.GameEntity.GlobalPosition;
+                                var newCellX = (int)(position.x / SPATIAL_CELL_SIZE);
+                                var newCellZ = (int)(position.z / SPATIAL_CELL_SIZE);
+                                
+                                if (oldCell != (newCellX, newCellZ))
+                                {
+                                    RemoveWeaponFromCache(spawnedItem);
+                                    AddWeaponToCache(spawnedItem);
+                                }
+                            }
+                        }
                     }
-                    weaponList.Add(spawnedItem);
                 }
+
+                // 移除不再存在的武器
+                foreach (var oldWeapon in _previousWeapons)
+                {
+                    if (!currentWeapons.Contains(oldWeapon) || oldWeapon.IsRemoved)
+                    {
+                        RemoveWeaponFromCache(oldWeapon);
+                    }
+                }
+
+                // 更新前一帧的武器集合
+                _previousWeapons.Clear();
+                _previousWeapons.UnionWith(currentWeapons);
+
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", 
+                    $"武器缓存更新完成 - 当前武器数量: {currentWeapons.Count}, " +
+                    $"空间分区数: {_spatialWeaponCache.Count}, " +
+                    $"有掉落武器: {_hasDroppedWeapons}");
+#endif
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", $"UpdateWeaponCache出错: {ex.Message}");
+#endif
+                // 发生错误时，清理所有缓存并重置状态
+                ResetWeaponCache();
+            }
+        }
+
+        private void ResetWeaponCache()
+        {
+            try
+            {
+                _previousWeapons.Clear();
+                _weaponCellCache.Clear();
+                _hasDroppedWeapons = false;
+
+                foreach (var lists in _spatialWeaponCache.Values)
+                {
+                    ReturnListToPool(lists);
+                }
+                _spatialWeaponCache.Clear();
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("PickUpWeapon", $"ResetWeaponCache出错: {ex.Message}");
+#endif
             }
         }
 
@@ -748,16 +872,9 @@ namespace PickItUp.Behaviors
         {
             try
             {
+                ResetWeaponCache();
                 _cachedWeapons.Clear();
                 _agentStates.Clear();
-                _hasDroppedWeapons = false;
-
-                foreach (var lists in _spatialWeaponCache.Values)
-                {
-                    lists.Clear();
-                }
-                _spatialWeaponCache.Clear();
-                _listPool.Clear();
 
                 base.OnEndMission();
             }
