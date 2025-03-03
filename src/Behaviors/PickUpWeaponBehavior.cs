@@ -485,6 +485,12 @@ namespace PickItUp.Behaviors
         {
             if (agent == null) return null;
 
+            // 首先检查Agent是否可以拾取武器
+            if (!CanAgentPickup(agent))
+            {
+                return null;
+            }
+
             var agentPosition = agent.Position;
             var cellX = (int)(agentPosition.x / SPATIAL_CELL_SIZE);
             var cellZ = (int)(agentPosition.z / SPATIAL_CELL_SIZE);
@@ -910,7 +916,7 @@ namespace PickItUp.Behaviors
             {
                 state = new AgentState();
                 _agentStates[agent] = state;
-                return true;
+                return CanAgentPickup(agent);
             }
 
             if (currentTime - state.LastStateUpdateTime < AGENT_CHECK_INTERVAL)
@@ -919,29 +925,7 @@ namespace PickItUp.Behaviors
             }
 
             state.LastStateUpdateTime = currentTime;
-            
-            if (!IsAgentValid(agent) || !agent.IsAIControlled || !IsRegularTroop(agent) || agent.IsMount)
-            {
-                state.NeedsWeaponCheck = false;
-                return false;
-            }
-
-            // 检查是否在缴械延迟时间内
-            if (Patches.AgentWeaponDropPatch.HasDisarmCooldown(agent))
-            {
-                state.NeedsWeaponCheck = false;
-                return false;
-            }
-
-            // 检查是否正在执行CinematicCombat动作
-            if (CCmodAct.IsExecutingCinematicAction(agent))
-            {
-                state.NeedsWeaponCheck = false;
-                return false;
-            }
-
-            var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
-            state.NeedsWeaponCheck = !hasTwoHandedWeapon && (!hasSingleHandedWeapon || !hasShield);
+            state.NeedsWeaponCheck = CanAgentPickup(agent);
             
             return state.NeedsWeaponCheck;
         }
