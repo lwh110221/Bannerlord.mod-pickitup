@@ -13,7 +13,7 @@ namespace PickItUp.Patches
     {
         internal static readonly Queue<Action> _pendingActions = new Queue<Action>();
         internal static bool _isProcessingActions = false; // 是否正在处理动作
-        internal const int MAX_ACTIONS_PER_TICK = 10;      // 每帧最多处理的动作数
+        internal const int MAX_ACTIONS_PER_TICK = 8;      // 每帧最多处理的动作数
 
         private static bool ShouldPersistWeapon(ItemObject item)
         {
