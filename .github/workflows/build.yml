@@ -1,4 +1,4 @@
-name: Build and Release Mod
+name: no shield build
 
 on:
   push:
@@ -36,30 +36,30 @@ jobs:
         
     - name: Create Release Version
       run: |
-        mkdir -p PickItUp\bin\Win64_Shipping_Client
-        copy "build\Release\PickItUp.dll" "PickItUp\bin\Win64_Shipping_Client\"
-        copy "build\Release\PickItUp.pdb" "PickItUp\bin\Win64_Shipping_Client\"
-        copy "SubModule.xml" "PickItUp\"
-        xcopy /E /I "ModuleData" "PickItUp\ModuleData"
-        Compress-Archive -Path PickItUp -DestinationPath PickItUp.zip -Force
+        mkdir -p PickItUp-NoShield\bin\Win64_Shipping_Client
+        copy "build\Release\PickItUp.dll" "PickItUp-NoShield\bin\Win64_Shipping_Client\"
+        copy "build\Release\PickItUp.pdb" "PickItUp-NoShield\bin\Win64_Shipping_Client\"
+        copy "SubModule.xml" "PickItUp-NoShield\"
+        xcopy /E /I "ModuleData" "PickItUp-NoShield\ModuleData"
+        Compress-Archive -Path PickItUp-NoShield -DestinationPath PickItUp-NoShield.zip -Force
         
     - name: Create Debug Version
       run: |
-        mkdir -p PickItUp_Debug\bin\Win64_Shipping_Client
-        copy "build\Debug\PickItUp.dll" "PickItUp_Debug\bin\Win64_Shipping_Client\"
-        copy "build\Debug\PickItUp.pdb" "PickItUp_Debug\bin\Win64_Shipping_Client\"
-        copy "SubModule.xml" "PickItUp_Debug\"
-        xcopy /E /I "ModuleData" "PickItUp_Debug\ModuleData"
-        Compress-Archive -Path PickItUp_Debug -DestinationPath PickItUp_Debug.zip -Force
+        mkdir -p PickItUp-NoShield_Debug\bin\Win64_Shipping_Client
+        copy "build\Debug\PickItUp.dll" "PickItUp-NoShield_Debug\bin\Win64_Shipping_Client\"
+        copy "build\Debug\PickItUp.pdb" "PickItUp-NoShield_Debug\bin\Win64_Shipping_Client\"
+        copy "SubModule.xml" "PickItUp-NoShield_Debug\"
+        xcopy /E /I "ModuleData" "PickItUp-NoShield_Debug\ModuleData"
+        Compress-Archive -Path PickItUp-NoShield_Debug -DestinationPath PickItUp-NoShield_Debug.zip -Force
       
     - name: Create Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          PickItUp.zip
-          PickItUp_Debug.zip
-        name: PickItUp ${{ github.ref_name }}
+          PickItUp-NoShield.zip
+          PickItUp-NoShield_Debug.zip
+        name: PickItUp NoShield ${{ github.ref_name }}
         body_path: CHANGELOG.md
         draft: false
         prerelease: false

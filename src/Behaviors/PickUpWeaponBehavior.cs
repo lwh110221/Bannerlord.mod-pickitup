@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.Engine;
 
 namespace PickItUp.Behaviors
 {
@@ -108,17 +107,10 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                var settings = Settings.Settings.Instance;
-                
-                // 检查是否为盾牌，且是否有任何近战武器被启用
+                // 直接排除盾牌
                 if (weaponClass == WeaponClass.SmallShield || weaponClass == WeaponClass.LargeShield)
                 {
-                    // 如果没有任何单手武器被启用，就不允许拾取盾牌
-                    return settings.PickupOneHandedSword || 
-                           settings.PickupOneHandedAxe || 
-                           settings.PickupMace || 
-                           settings.PickupOneHandedPolearm || 
-                           settings.PickupDagger;
+                    return false;
                 }
 
                 return IsMeleeWeapon(spawnedItem.WeaponCopy.Item.WeaponComponent);
@@ -134,12 +126,14 @@ namespace PickItUp.Behaviors
 
         private bool CanBeUsedAsMeleeWeapon(WeaponClass weaponClass)
         {
-            // 排除所有远程武器和弹药
+            // 排除所有远程武器、弹药和盾牌
             if (weaponClass == WeaponClass.Arrow ||
                 weaponClass == WeaponClass.Bolt ||
                 weaponClass == WeaponClass.Stone ||
                 weaponClass == WeaponClass.Bow ||
-                weaponClass == WeaponClass.Crossbow)
+                weaponClass == WeaponClass.Crossbow ||
+                weaponClass == WeaponClass.SmallShield ||  // 排除小盾
+                weaponClass == WeaponClass.LargeShield)    // 排除大盾
             {
                 return false;
             }
@@ -171,9 +165,6 @@ namespace PickItUp.Behaviors
                 case WeaponClass.ThrowingKnife:
                 case WeaponClass.Javelin:
                     return settings.PickupThrowingWeapons;
-                case WeaponClass.SmallShield:
-                case WeaponClass.LargeShield:
-                    return true; // 允许拾取盾牌
                 default:
                     return false;
             }
@@ -191,65 +182,38 @@ namespace PickItUp.Behaviors
             return agent.Character.IsSoldier || agent.Character.IsHero;
         }
 
-        private void UpdateWeaponStatus(WeaponClass weaponClass, ref bool hasShield, ref bool hasSingleHandedWeapon, ref bool hasTwoHandedWeapon)
+        private bool HasMeleeWeapon(Agent agent)
         {
-            if (IsShield(weaponClass))
-            {
-                hasShield = true;
-            }
-            else if (IsSingleHandedWeapon(weaponClass))
-            {
-                hasSingleHandedWeapon = true;
-            }
-            else if (weaponClass == WeaponClass.TwoHandedSword || 
-                     weaponClass == WeaponClass.TwoHandedAxe || 
-                     weaponClass == WeaponClass.TwoHandedMace || 
-                     weaponClass == WeaponClass.TwoHandedPolearm)
-            {
-                hasTwoHandedWeapon = true;
-            }
-        }
+            if (agent?.Equipment == null) return false;
 
-        private (bool hasShield, bool hasSingleHandedWeapon, bool hasTwoHandedWeapon) GetAgentWeaponStatus(Agent agent)
-        {
-            bool hasShield = false;
-            bool hasSingleHandedWeapon = false;
-            bool hasTwoHandedWeapon = false;
-
-            if (agent?.Equipment != null)
+            // 检查当前装备
+            for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
             {
-                // 检查当前装备
-                for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
+                var equipment = agent.Equipment[i];
+                if (!equipment.IsEmpty)
                 {
-                    var equipment = agent.Equipment[i];
-                    if (!equipment.IsEmpty)
+                    var item = equipment.Item;
+                    if (item?.WeaponComponent != null)
                     {
-                        var item = equipment.Item;
-                        if (item?.WeaponComponent != null)
-                        {
-                            var weaponClass = item.WeaponComponent.PrimaryWeapon.WeaponClass;
-                            
-                            // 如果是投掷武器，检查数量
-                            bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
-                                                  weaponClass == WeaponClass.ThrowingKnife ||
-                                                  weaponClass == WeaponClass.Javelin;
+                        var weaponClass = item.WeaponComponent.PrimaryWeapon.WeaponClass;
+                        
+                        // 如果是投掷武器，检查数量
+                        bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
+                                              weaponClass == WeaponClass.ThrowingKnife ||
+                                              weaponClass == WeaponClass.Javelin;
 
-                            if (!isThrowingWeapon || (isThrowingWeapon && equipment.Amount > 0))
+                        if (!isThrowingWeapon || (isThrowingWeapon && equipment.Amount > 0))
+                        {
+                            if (IsMeleeWeapon(item.WeaponComponent))
                             {
-                                UpdateWeaponStatus(weaponClass, ref hasShield, ref hasSingleHandedWeapon, ref hasTwoHandedWeapon);
-                            }
-                            
-                            // 如果已经找到双手武器，可以提前退出
-                            if (hasTwoHandedWeapon)
-                            {
-                                return (hasShield, hasSingleHandedWeapon, true);
+                                return true;
                             }
                         }
                     }
                 }
             }
 
-            return (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon);
+            return false;
         }
 
         private bool CanAgentPickup(Agent agent)
@@ -291,25 +255,8 @@ namespace PickItUp.Behaviors
                     }
                 }
 
-                var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
-
-                // 如果有双手武器，不允许拾取任何武器
-                if (hasTwoHandedWeapon)
-                {
-                    return false;
-                }
-
-                // 检查当前装备槽位中是否有任何可用武器
-                bool hasAnyUsableWeapon = hasSingleHandedWeapon || hasTwoHandedWeapon;
-
-                // 如果没有任何可用武器，允许拾取
-                if (!hasAnyUsableWeapon)
-                {
-                    return true;
-                }
-
-                // 如果只有单手武器且没有盾牌，允许拾取盾牌
-                return hasSingleHandedWeapon && !hasShield;
+                // 如果已经有近战武器，不需要再拾取
+                return !HasMeleeWeapon(agent);
             }
             catch (Exception ex)
             {
@@ -485,6 +432,12 @@ namespace PickItUp.Behaviors
         {
             if (agent == null) return null;
 
+            // 首先检查Agent是否可以拾取武器
+            if (!CanAgentPickup(agent))
+            {
+                return null;
+            }
+
             var agentPosition = agent.Position;
             var cellX = (int)(agentPosition.x / SPATIAL_CELL_SIZE);
             var cellZ = (int)(agentPosition.z / SPATIAL_CELL_SIZE);
@@ -513,40 +466,11 @@ namespace PickItUp.Behaviors
 
             if (validWeapons.Count == 0) return null;
 
-            var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
-
-            // 如果有双手武器，不允许拾取任何武器
-            if (hasTwoHandedWeapon)
-            {
-                return null;
-            }
-
-            // 如果AI只有盾牌没有武器，找任何非盾牌武器
-            if (hasShield && !hasSingleHandedWeapon)
-            {
-                return validWeapons
-                    .Where(w => !IsShield(w.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass))
-                    .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
-                    .FirstOrDefault();
-            }
-            // 如果AI有单手武器且没有盾牌，找盾牌
-            else if (hasSingleHandedWeapon && !hasShield)
-            {
-                return validWeapons
-                    .Where(w => IsShield(w.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass))
-                    .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
-                    .FirstOrDefault();
-            }
-            // 如果AI没有武器，找任何非盾牌武器
-            else if (!hasSingleHandedWeapon && !hasShield)
-            {
-                return validWeapons
-                    .Where(w => !IsShield(w.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass))
-                    .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
-                    .FirstOrDefault();
-            }
-
-            return null;
+            // 如果AI没有武器，找任何可用的近战武器
+            return validWeapons
+                .Where(w => IsMeleeWeapon(w.WeaponCopy.Item.WeaponComponent))
+                .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
+                .FirstOrDefault();
         }
 
         public override void OnMissionTick(float dt)
@@ -634,6 +558,13 @@ namespace PickItUp.Behaviors
 
                     if (currentTime >= state.NextSearchTime)
                     {
+                        // 每次尝试拾取前都重新检查Agent状态
+                        if (!CanAgentPickup(agent))
+                        {
+                            ResetAgentPickupState(agent, "Agent不满足拾取条件");
+                            continue;
+                        }
+
                         if (state.TargetWeapon == null)
                         {
                             SpawnedItemEntity nearestWeapon = FindNearestWeapon(agent);
@@ -645,6 +576,13 @@ namespace PickItUp.Behaviors
                         }
                         else if (state.TargetWeapon != null)
                         {
+                            // 再次检查Agent状态
+                            if (!CanAgentPickup(agent))
+                            {
+                                ResetAgentPickupState(agent, "Agent不再满足拾取条件");
+                                continue;
+                            }
+
                             if (state.TargetWeapon.IsRemoved)
                             {
                                 SpawnedItemEntity newWeapon = FindNearestWeapon(agent);
@@ -667,6 +605,12 @@ namespace PickItUp.Behaviors
                                 }
                                 else if (agent.CanReachAndUseObject(state.TargetWeapon, distanceSq))
                                 {
+                                    // 最后一次检查Agent状态
+                                    if (!CanAgentPickup(agent))
+                                    {
+                                        ResetAgentPickupState(agent, "Agent在最后阶段不满足拾取条件");
+                                        continue;
+                                    }
                                     TryPickupWeapon(agent);
                                 }
                             }
@@ -715,8 +659,15 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                if (!IsAgentValid(agent))
+                // 首先检查Agent是否可以拾取武器
+                if (!CanAgentPickup(agent))
                 {
+#if DEBUG
+                    if (Patches.AgentWeaponDropPatch.HasDisarmCooldown(agent))
+                    {
+                        DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 在缴械延迟时间内，无法拾取武器");
+                    }
+#endif
                     return;
                 }
 
@@ -731,6 +682,20 @@ namespace PickItUp.Behaviors
 
                 // AI正在执行拾取动画,不尝试新的拾取
                 if (_agentStates.TryGetValue(agent, out var state) && state.AnimationState.WeaponToPickup != null)
+                {
+                    return;
+                }
+
+                // 获取Agent的状态
+                if (!_agentStates.TryGetValue(agent, out state))
+                {
+                    state = new AgentState();
+                    _agentStates[agent] = state;
+                }
+
+                // 检查上次拾取尝试的时间间隔
+                float currentTime = Mission.Current.CurrentTime;
+                if (currentTime - state.LastPickupAttempt < 0.5f)  // 添加最小时间间隔
                 {
                     return;
                 }
@@ -886,23 +851,6 @@ namespace PickItUp.Behaviors
             }
         }
 
-        private bool IsShield(WeaponClass weaponClass)
-        {
-            return weaponClass == WeaponClass.SmallShield || weaponClass == WeaponClass.LargeShield;
-        }
-
-        private bool IsSingleHandedWeapon(WeaponClass weaponClass)
-        {
-            return weaponClass == WeaponClass.OneHandedSword || 
-                   weaponClass == WeaponClass.OneHandedAxe || 
-                   weaponClass == WeaponClass.Mace || 
-                   weaponClass == WeaponClass.OneHandedPolearm || 
-                   weaponClass == WeaponClass.Dagger ||
-                   weaponClass == WeaponClass.ThrowingAxe ||
-                   weaponClass == WeaponClass.ThrowingKnife ||
-                   weaponClass == WeaponClass.Javelin;
-        }
-
         // 新增: 快速检查Agent是否需要武器
         private bool NeedsWeaponCheck(Agent agent, float currentTime)
         {
@@ -910,7 +858,7 @@ namespace PickItUp.Behaviors
             {
                 state = new AgentState();
                 _agentStates[agent] = state;
-                return true;
+                return CanAgentPickup(agent);
             }
 
             if (currentTime - state.LastStateUpdateTime < AGENT_CHECK_INTERVAL)
@@ -919,30 +867,7 @@ namespace PickItUp.Behaviors
             }
 
             state.LastStateUpdateTime = currentTime;
-            
-            if (!IsAgentValid(agent) || !agent.IsAIControlled || !IsRegularTroop(agent) || agent.IsMount)
-            {
-                state.NeedsWeaponCheck = false;
-                return false;
-            }
-
-            // 检查是否在缴械延迟时间内
-            if (Patches.AgentWeaponDropPatch.HasDisarmCooldown(agent))
-            {
-                state.NeedsWeaponCheck = false;
-                return false;
-            }
-
-            // 检查是否正在执行CinematicCombat动作
-            if (CCmodAct.IsExecutingCinematicAction(agent))
-            {
-                state.NeedsWeaponCheck = false;
-                return false;
-            }
-
-            var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
-            state.NeedsWeaponCheck = !hasTwoHandedWeapon && (!hasSingleHandedWeapon || !hasShield);
-            
+            state.NeedsWeaponCheck = CanAgentPickup(agent);
             return state.NeedsWeaponCheck;
         }
     }
