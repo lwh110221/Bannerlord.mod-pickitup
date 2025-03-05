@@ -697,17 +697,41 @@ namespace PickItUp.Behaviors
 
         private void MoveToWeapon(Agent agent, SpawnedItemEntity weapon)
         {
-            if (agent == null || weapon == null) return;
+            if (agent == null || weapon == null || agent.IsUsingGameObject) return;
 
             try
             {
-                // ----备用方法----
-                // agent.DisableScriptedMovement();
-                // agent.ClearTargetFrame();
-                // WorldPosition targetPosition = new(Mission.Current.Scene, weapon.GameEntity.GlobalPosition);
-                // agent.SetScriptedPosition(ref targetPosition, false, Agent.AIScriptedFrameFlags.NoAttack);
-                // ----备用方法----
-                agent.AIMoveToGameObjectEnable(weapon, null, Agent.AIScriptedFrameFlags.None);
+                if ((Mission.Current.IsSiegeBattle || Mission.Current.IsSallyOutBattle) && !agent.IsUsingGameObject)
+                {
+                    // 攻城战使用优化后的移动方法
+                    agent.DisableScriptedMovement();
+                    agent.ClearTargetFrame();
+                    
+                    // 直接使用已缓存的位置信息
+                    var targetPosition = weapon.GameEntity.GlobalPosition;
+                    
+                    // Agent索引进行位置偏移，避免AI堆积
+                    float offsetX = (agent.Index % 3 - 1) * 0.3f;
+                    float offsetZ = (agent.Index / 3 % 3 - 1) * 0.3f;
+                    targetPosition.x += offsetX;
+                    targetPosition.z += offsetZ;
+                    
+                    WorldPosition worldPos = new(Mission.Current.Scene, targetPosition);
+                    agent.SetScriptedPosition(ref worldPos, false, Agent.AIScriptedFrameFlags.None);
+#if DEBUG
+                    if (_weaponCellCache.TryGetValue(weapon, out var cell))
+                    {
+                        DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 在攻城战中移动到武器 Cell:({cell.x},{cell.z})");
+                    }
+#endif
+                }
+                else if (!agent.IsUsingGameObject)
+                {
+                    agent.AIMoveToGameObjectEnable(weapon, null, Agent.AIScriptedFrameFlags.None);
+#if DEBUG
+                    DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 在非攻城战中移动到武器");
+#endif
+                }
             }
             catch (Exception ex)
             {
@@ -721,7 +745,7 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                if (!IsAgentValid(agent))
+                if (!IsAgentValid(agent) || agent.IsUsingGameObject)
                 {
                     return;
                 }
@@ -838,9 +862,14 @@ namespace PickItUp.Behaviors
                     state.Reset();
                 }
 
-                agent.DisableScriptedMovement();
-                agent.AIMoveToGameObjectDisable();
-                agent.InvalidateAIWeaponSelections();
+                if ((Mission.Current.IsSiegeBattle || Mission.Current.IsSallyOutBattle) && !agent.IsUsingGameObject)
+                {
+                    agent.DisableScriptedMovement();
+                }
+                else if (!agent.IsUsingGameObject)
+                {
+                    agent.AIMoveToGameObjectDisable();
+                }
 
                 if (!string.IsNullOrEmpty(reason))
                 {
