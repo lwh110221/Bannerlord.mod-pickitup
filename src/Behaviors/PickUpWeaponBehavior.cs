@@ -33,6 +33,7 @@ namespace PickItUp.Behaviors
             public (float StartTime, SpawnedItemEntity WeaponToPickup, EquipmentIndex TargetSlot) AnimationState;
             public bool NeedsWeaponCheck;
             public float LastStateUpdateTime;
+            public float StuckTime;
             
             public void Reset()
             {
@@ -43,6 +44,7 @@ namespace PickItUp.Behaviors
                 AnimationState = default;
                 NeedsWeaponCheck = true;
                 LastStateUpdateTime = 0f;
+                StuckTime = 0f;
             }
         }
 
@@ -860,15 +862,19 @@ namespace PickItUp.Behaviors
                 if (_agentStates.TryGetValue(agent, out var state))
                 {
                     state.Reset();
+                    // 确保下一次立即检查
+                    state.NextSearchTime = 0f;
+                    state.LastStateUpdateTime = 0f;
+                    state.NeedsWeaponCheck = true;
                 }
 
-                if ((Mission.Current.IsSiegeBattle || Mission.Current.IsSallyOutBattle) && !agent.IsUsingGameObject)
+                // 完全重置AI的移动状态
+                if (!agent.IsUsingGameObject)
                 {
                     agent.DisableScriptedMovement();
-                }
-                else if (!agent.IsUsingGameObject)
-                {
                     agent.AIMoveToGameObjectDisable();
+                    
+                    agent.SetActionChannel(0, ActionIndexCache.act_none);
                 }
 
                 if (!string.IsNullOrEmpty(reason))
@@ -941,6 +947,11 @@ namespace PickItUp.Behaviors
         // 新增: 快速检查Agent是否需要武器
         private bool NeedsWeaponCheck(Agent agent, float currentTime)
         {
+            if (!IsAgentValid(agent) || !agent.IsAIControlled || agent.IsMount)
+            {
+                return false;
+            }
+
             if (!_agentStates.TryGetValue(agent, out var state))
             {
                 state = new AgentState();
@@ -948,12 +959,33 @@ namespace PickItUp.Behaviors
                 return CanAgentPickup(agent);
             }
 
+            // 如果正在执行拾取动画，不需要检查
+            if (state.AnimationState.WeaponToPickup != null)
+            {
+                return false;
+            }
+
+            // 如果距离上次更新时间太短，使用缓存的结果
             if (currentTime - state.LastStateUpdateTime < AGENT_CHECK_INTERVAL)
             {
                 return state.NeedsWeaponCheck;
             }
 
+            // 更新检查时间
             state.LastStateUpdateTime = currentTime;
+
+            // 获取武器状态
+            var (hasShield, hasSingleHandedWeapon, hasTwoHandedWeapon) = GetAgentWeaponStatus(agent);
+            
+            // 如果完全没有武器，立即设置需要检查
+            if (!hasShield && !hasSingleHandedWeapon && !hasTwoHandedWeapon)
+            {
+                state.NeedsWeaponCheck = true;
+                state.NextSearchTime = 0f;
+                return true;
+            }
+
+            // 其他情况按正常逻辑检查
             state.NeedsWeaponCheck = CanAgentPickup(agent);
             
             return state.NeedsWeaponCheck;
