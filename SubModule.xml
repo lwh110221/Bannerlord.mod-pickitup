@@ -2,7 +2,7 @@
 <Module>
     <Name value="Pick It Up -shield version"/>
     <Id value="PickItUp"/>
-    <Version value="v1.2.2"/>
+    <Version value="v1.2.3"/>
     <author value="Ahao221"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>
