@@ -17,7 +17,7 @@ namespace PickItUp.Behaviors
         private const int MAX_AGENTS_PER_TICK = 8;  // 每tick处理的最大AI数量
         private const float WEAPON_CACHE_UPDATE_INTERVAL = 0.5f; // 武器缓存更新间隔
         private const int INITIAL_LIST_CAPACITY = 32;
-        private const float AGENT_CHECK_INTERVAL = 0.5f; // 检查间隔
+        private const float AGENT_CHECK_INTERVAL = 1.0f; // 检查间隔
         private const float SPATIAL_CELL_SIZE = 5f;    // 空间分区大小
         private float _lastWeaponCacheUpdateTime;
         private readonly List<SpawnedItemEntity> _cachedWeapons = new List<SpawnedItemEntity>(INITIAL_LIST_CAPACITY);
