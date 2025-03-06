@@ -76,6 +76,8 @@ namespace PickItUp.Patches
                    weaponClass == WeaponClass.TwoHandedMace ||
                    weaponClass == WeaponClass.OneHandedPolearm ||
                    weaponClass == WeaponClass.TwoHandedPolearm ||
+                   weaponClass == WeaponClass.LowGripPolearm ||
+                   weaponClass == WeaponClass.Pick ||
                    weaponClass == WeaponClass.Dagger ||
                    weaponClass == WeaponClass.ThrowingAxe ||
                    weaponClass == WeaponClass.ThrowingKnife ||
@@ -117,11 +119,17 @@ namespace PickItUp.Patches
                 {
                     if (_disarmedAgentTimes.Remove(agent))
                     {
+#if DEBUG
+                        DebugHelper.Log("AgentWeaponDrop", $"移除Agent {agent.Name} 的缴械冷却");
+#endif
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+#if DEBUG
+                DebugHelper.Log("AgentWeaponDrop", $"移除缴械冷却时出错: {ex.Message}");
+#endif
             }
         }
 
@@ -131,9 +139,60 @@ namespace PickItUp.Patches
             {
                 int count = _disarmedAgentTimes.Count;
                 _disarmedAgentTimes.Clear();
+#if DEBUG
+                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却状态，共 {count} 个");
+#endif
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+#if DEBUG
+                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却时出错: {ex.Message}");
+#endif
+            }
+        }
+
+        [HarmonyPatch(typeof(Mission))]
+        public static class MissionPatch
+        {
+            [HarmonyPatch("OnAgentDeleted")]
+            [HarmonyPostfix]
+            public static void OnAgentDeletedPostfix(Agent affectedAgent)
+            {
+                try
+                {
+                    if (affectedAgent != null)
+                    {
+#if DEBUG
+                        DebugHelper.Log("AgentWeaponDrop", $"Agent {affectedAgent.Name} 被删除，清理其缴械状态");
+#endif
+                        RemoveDisarmCooldown(affectedAgent);
+                    }
+                }
+                catch (Exception ex)
+                {
+#if DEBUG
+                    DebugHelper.Log("AgentWeaponDrop", $"处理Agent删除时出错: {ex.Message}");
+#endif
+                }
+            }
+
+            [HarmonyPatch("EndMission")]
+            [HarmonyPostfix]
+            public static void EndMissionPostfix()
+            {
+                try
+                {
+#if DEBUG
+                    DebugHelper.Log("AgentWeaponDrop", "任务结束，清理所有缴械状态");
+#endif
+                    ClearAllCooldowns();
+                }
+                catch (Exception ex)
+                {
+#if DEBUG
+                    DebugHelper.Log("AgentWeaponDrop", $"处理任务结束时出错: {ex.Message}");
+#endif
+                }
             }
         }
     }
