@@ -175,5 +175,31 @@ namespace PickItUp.Util
                 return false;
             }
         }
+
+        /// <summary>
+        /// 判断武器是否可以在马上使用（不考虑填装限制）
+        /// </summary>
+        /// <param name="weaponComponent">武器组件</param>
+        /// <returns>如果可以在马上使用返回true，否则返回false</returns>
+        public static bool CanUseWeaponOnHorseback(WeaponComponent weaponComponent)
+        {
+            if (weaponComponent?.PrimaryWeapon == null)
+            {
+                return false;
+            }
+            
+            try
+            {
+                // 检查是否不能在马上使用的标志
+                return (weaponComponent.PrimaryWeapon.WeaponFlags & WeaponFlags.NotUsableWithOneHand) != WeaponFlags.NotUsableWithOneHand;
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("WeaponCheck", $"检查武器是否可在马上使用时出错: {ex.Message}");
+#endif
+                return false;
+            }
+        }
     }
 }

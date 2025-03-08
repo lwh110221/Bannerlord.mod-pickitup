@@ -179,7 +179,7 @@ namespace PickItUp.Behaviors
                 
                 // 检查是否有空闲装备槽位
                 bool hasEmptySlot = false;
-                for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i <= EquipmentIndex.Weapon3; i++)
+                for (int i = 0; i < (int)EquipmentIndex.NumPrimaryWeaponSlots; i++)
                 {
                     if (agent.Equipment[i].IsEmpty)
                     {
@@ -642,9 +642,9 @@ namespace PickItUp.Behaviors
                                  !item.IsDeactivated &&
                                  WeaponCheck.IsValidWeapon(item) &&
                                  item.GameEntity.GlobalPosition.Distance(agentPosition) <= SearchRadius &&
-                                 // 根据需求类型过滤物品
                                  ((needsShield && WeaponCheck.IsItemShield(item)) ||
-                                  (needsWeapon && !WeaponCheck.IsItemShield(item))))
+                                  (needsWeapon && !WeaponCheck.IsItemShield(item))) &&
+                                 (!agent.HasMount || !needsWeapon || WeaponCheck.CanUseWeaponOnHorseback(item.WeaponCopy.Item.WeaponComponent)))
                     .OrderBy(x => x.GameEntity.GlobalPosition.Distance(agentPosition))
                     .ToList();
 
