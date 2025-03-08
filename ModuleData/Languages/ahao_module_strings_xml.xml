@@ -37,6 +37,9 @@
     <string id="ahao_persist_shield" text="Shields"/>
     <string id="ahao_persist_shield_hint" text="Keep shields do not disappear on battlefield"/>
     
+    <string id="ahao_shield_settings" text="Shield Settings"/>
+    <string id="ahao_shield" text="Shield Pickup"/>
+    <string id="ahao_shield_hint" text="If enabled, the soldier with an empty right hand will pick up the shield. Default: On"/>
     
     <!-- 武器类型设置 -->
     <string id="ahao_weapon_types" text="Allow Weapon Types"/>

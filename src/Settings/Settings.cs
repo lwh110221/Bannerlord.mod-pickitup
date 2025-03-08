@@ -114,10 +114,10 @@ namespace PickItUp.Settings
         public bool PersistShields { get; set; } = true;
 
         // 盾牌拾取开关
-        [SettingPropertyBool("{=ahao_shield}盾牌拾取",
+        [SettingPropertyBool("{=ahao_shield}Shield Pickup",
             RequireRestart = false,
-            HintText = "{=ahao_shield_hint}盾牌拾取", Order = 1)]
-        [SettingPropertyGroup("{=ahao_shield_settings}盾牌", GroupOrder = 2)]
+            HintText = "{=ahao_shield_hint}If enabled, the soldier with an empty right hand will pick up the shield. Default: On", Order = 1)]
+        [SettingPropertyGroup("{=ahao_shield_settings}Shield", GroupOrder = 2)]
         public bool EnableShieldPickup { get; set; } = true;
 
         public Settings()

@@ -34,6 +34,9 @@
     <string id="ahao_persist_shield" text="盾牌"/>
     <string id="ahao_persist_shield_hint" text="保持盾牌在战场上不消失"/>
 
+    <string id="ahao_shield_settings" text="盾牌设置"/>
+    <string id="ahao_shield" text="盾牌拾取"/>
+    <string id="ahao_shield_hint" text="如果启用，当前右手是空手的士兵会拾取盾牌。默认：开启"/>
      <!-- 武器类型设置 -->
     <string id="ahao_weapon_types" text="允许武器类型"/>
     <string id="ahao_one_handed_sword" text="单手剑"/>
