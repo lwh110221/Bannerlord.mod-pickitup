@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
+using TaleWorlds.Library;
 
 namespace PickItUp.Patches
 {
@@ -11,6 +12,7 @@ namespace PickItUp.Patches
     /// </summary>
     public class AgentWeaponDropPatch
     {
+        #region Main
         // 记录被缴械的Agent和时间
         private static readonly Dictionary<Agent, float> _disarmedAgentTimes = new Dictionary<Agent, float>();
 
@@ -28,7 +30,7 @@ namespace PickItUp.Patches
                 if (_disarmedAgentTimes.TryGetValue(agent, out float disarmedTime))
                 {
                     float currentTime = Mission.Current.CurrentTime;
-                    bool hasCooldown = (currentTime - disarmedTime) < PickupDelay;                    
+                    bool hasCooldown = (currentTime - disarmedTime) < PickupDelay;
                     return hasCooldown;
                 }
                 return false;
@@ -38,7 +40,9 @@ namespace PickItUp.Patches
                 return false;
             }
         }
+        #endregion
 
+        #region 补丁
         [HarmonyPatch(typeof(Agent))]
         public static class AgentPatch
         {
@@ -49,7 +53,7 @@ namespace PickItUp.Patches
             {
                 try
                 {
-                    if (__instance == null || !__instance.IsAIControlled)
+                    if (__instance == null || !__instance.IsAIControlled || __instance.Health <= 0f)
                     {
                         return;
                     }
@@ -62,46 +66,6 @@ namespace PickItUp.Patches
                 catch (Exception)
                 {
                 }
-            }
-        }
-
-        public static void RemoveDisarmCooldown(Agent agent)
-        {
-            try
-            {
-                if (agent != null)
-                {
-                    if (_disarmedAgentTimes.Remove(agent))
-                    {
-#if DEBUG
-                        DebugHelper.Log("AgentWeaponDrop", $"移除Agent {agent.Name} 的缴械冷却");
-#endif
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", $"移除缴械冷却时出错: {ex.Message}");
-#endif
-            }
-        }
-
-        public static void ClearAllCooldowns()
-        {
-            try
-            {
-                int count = _disarmedAgentTimes.Count;
-                _disarmedAgentTimes.Clear();
-#if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却状态，共 {count} 个");
-#endif
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却时出错: {ex.Message}");
-#endif
             }
         }
 
@@ -149,5 +113,77 @@ namespace PickItUp.Patches
                 }
             }
         }
+        // <summary>
+        // 处理Agent武器弹药耗尽事件
+        // </summary>
+        [HarmonyPatch(typeof(Agent))]
+        public static class AgentAmmoEmptyPatch
+        {
+            [HarmonyPatch("OnWeaponAmountChange")]
+            [HarmonyPostfix]
+            public static void OnWeaponAmountChangePostfix(Agent __instance, EquipmentIndex slotIndex, short amount)
+            {
+                if (__instance == null || __instance.Health <= 0)
+                {
+                    return;
+                }
+                if (amount == 0)
+                {
+                    MissionWeapon weapon = __instance.Equipment[slotIndex];
+                    if (weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Bolt)
+                    {
+                        return;
+                    }
+                    __instance.DropItem(slotIndex);
+                    if (__instance.IsPlayerControlled)
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage("Out of ammo!", Colors.Red));
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region 辅助方法
+        public static void RemoveDisarmCooldown(Agent agent)
+        {
+            try
+            {
+                if (agent != null)
+                {
+                    if (_disarmedAgentTimes.Remove(agent))
+                    {
+#if DEBUG
+                        DebugHelper.Log("AgentWeaponDrop", $"移除Agent {agent.Name} 的缴械冷却");
+#endif
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("AgentWeaponDrop", $"移除缴械冷却时出错: {ex.Message}");
+#endif
+            }
+        }
+
+        public static void ClearAllCooldowns()
+        {
+            try
+            {
+                int count = _disarmedAgentTimes.Count;
+                _disarmedAgentTimes.Clear();
+#if DEBUG
+                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却状态，共 {count} 个");
+#endif
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却时出错: {ex.Message}");
+#endif
+            }
+        }
+        #endregion
     }
-} 
+}
