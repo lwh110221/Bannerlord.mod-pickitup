@@ -11,34 +11,34 @@ namespace PickItUp.Settings
         public override string DisplayName => new TextObject("{=ahao_mod_name}PickItUp -Ahao221").ToString();
         public override string FolderName => "PickItUp";
         public override string FormatType => "json";
-        
+
         public new static Settings Instance => AttributeGlobalSettings<Settings>.Instance;
 
-        [SettingPropertyBool("{=ahao_items}Enable Weapon Persistence", 
+        [SettingPropertyBool("{=ahao_items}Enable Weapon Persistence",
             RequireRestart = false,
             HintText = "{=ahao_items_hint}If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On", Order = 1)]
-        [SettingPropertyGroup("{=ahao_items_settings}Items Setting", GroupOrder = 3)]
+        [SettingPropertyGroup("{=ahao_items_settings}Items Setting", GroupOrder = 4)]
         public bool EnableWeaponPersistence { get; set; } = false;
 
-        [SettingPropertyBool("{=ahao_show_status}Show Status Message", 
+        [SettingPropertyBool("{=ahao_show_status}Show Status Message",
             RequireRestart = false,
             HintText = "{=ahao_show_status_hint}Whether to display status messages when entering the battlefield. Default: On", Order = 2)]
-        [SettingPropertyGroup("{=ahao_items_settings}Items Setting", GroupOrder = 3)]
+        [SettingPropertyGroup("{=ahao_items_settings}Items Setting", GroupOrder = 4)]
         public bool ShowStatusMessage { get; set; } = true;
 
-        [SettingPropertyFloatingInteger("{=ahao_pickup_delay}Disoriented Duration", 0.5f, 5.0f, "0.0", RequireRestart = false, 
+        [SettingPropertyFloatingInteger("{=ahao_pickup_delay}Disoriented Duration", 0.5f, 5.0f, "0.0", RequireRestart = false,
         HintText = "{=ahao_pickup_delay_hint}The time (in seconds) AI remains disoriented after losing weapon before attempting to pick it up. Default: 1.5 seconds", Order = 0)]
         [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 1)]
         public float PickupDelay { get; set; } = 1.5f;
 
-        [SettingPropertyFloatingInteger("{=ahao_search_radius}Search Radius", 3.0f, 20.0f, "0.0", RequireRestart = false, 
+        [SettingPropertyFloatingInteger("{=ahao_search_radius}Search Radius", 3.0f, 20.0f, "0.0", RequireRestart = false,
             HintText = "{=ahao_search_radius_hint}The range (in meters) AI searches for dropped weapons. Default: 5.0 meters", Order = 1)]
         [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 1)]
-        public float SearchRadius { get; set; } = 5.0f; 
-      
+        public float SearchRadius { get; set; } = 5.0f;
+
         // 武器类型设置
-        [SettingPropertyGroup("{=ahao_weapon_types}Allow Weapon Types", GroupOrder = 2)]
-        [SettingPropertyBool("{=ahao_one_handed_sword}One Handed Sword", RequireRestart = false, 
+        [SettingPropertyGroup("{=ahao_weapon_types}Allow Weapon Types", GroupOrder = 3)]
+        [SettingPropertyBool("{=ahao_one_handed_sword}One Handed Sword", RequireRestart = false,
             HintText = "{=ahao_one_handed_sword_hint}Allow AI to pick up one-handed swords", Order = 0)]
         public bool PickupOneHandedSword { get; set; } = true;
 
@@ -113,17 +113,25 @@ namespace PickItUp.Settings
             HintText = "{=ahao_persist_shield_hint}Keep shields do not disappear on battlefield", Order = 4)]
         public bool PersistShields { get; set; } = true;
 
+        // 盾牌拾取开关
+        [SettingPropertyBool("{=ahao_shield}盾牌拾取",
+            RequireRestart = false,
+            HintText = "{=ahao_shield_hint}盾牌拾取", Order = 1)]
+        [SettingPropertyGroup("{=ahao_shield_settings}盾牌", GroupOrder = 2)]
+        public bool EnableShieldPickup { get; set; } = true;
+
         public Settings()
         {
             EnableWeaponPersistence = false;  // 默认启用武器持久化
             PickupDelay = 1.5f;        //懵逼时间
             SearchRadius = 5.0f;       //搜索范围
-            ShowStatusMessage = true;   // 默认显示状态消息
+            ShowStatusMessage = true;
             PersistMeleeWeapons = true;
             PersistRangedWeapons = true;
             PersistThrownWeapons = true;
             PersistAmmunition = true;
             PersistShields = true;
+            EnableShieldPickup = true;
         }
     }
-} 
+}

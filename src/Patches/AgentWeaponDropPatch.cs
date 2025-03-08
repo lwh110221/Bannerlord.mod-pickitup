@@ -39,51 +39,6 @@ namespace PickItUp.Patches
             }
         }
 
-        private static bool HasMeleeWeapon(Agent agent)
-        {
-            try
-            {
-                if (agent?.Equipment == null) return false;
-
-                for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i < EquipmentIndex.NumAllWeaponSlots; i++)
-                {
-                    var equipment = agent.Equipment[i];
-                    if (!equipment.IsEmpty && equipment.Item?.WeaponComponent != null)
-                    {
-                        var weaponClass = equipment.Item.WeaponComponent.PrimaryWeapon.WeaponClass;
-                        // 检查是否是近战武器
-                        if (IsMeleeWeaponClass(weaponClass))
-                        {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        private static bool IsMeleeWeaponClass(WeaponClass weaponClass)
-        {
-            return weaponClass == WeaponClass.OneHandedSword ||
-                   weaponClass == WeaponClass.TwoHandedSword ||
-                   weaponClass == WeaponClass.OneHandedAxe ||
-                   weaponClass == WeaponClass.TwoHandedAxe ||
-                   weaponClass == WeaponClass.Mace ||
-                   weaponClass == WeaponClass.TwoHandedMace ||
-                   weaponClass == WeaponClass.OneHandedPolearm ||
-                   weaponClass == WeaponClass.TwoHandedPolearm ||
-                   weaponClass == WeaponClass.LowGripPolearm ||
-                   weaponClass == WeaponClass.Pick ||
-                   weaponClass == WeaponClass.Dagger ||
-                   weaponClass == WeaponClass.ThrowingAxe ||
-                   weaponClass == WeaponClass.ThrowingKnife ||
-                   weaponClass == WeaponClass.Javelin;
-        }
-
         [HarmonyPatch(typeof(Agent))]
         public static class AgentPatch
         {
@@ -99,8 +54,7 @@ namespace PickItUp.Patches
                         return;
                     }
 
-                    // 直接检查是否还有近战武器
-                    if (!HasMeleeWeapon(__instance))
+                    if (!__instance.HasMeleeWeaponCached && !__instance.HasSpearCached)
                     {
                         _disarmedAgentTimes[__instance] = Mission.Current.CurrentTime;
                     }

@@ -104,14 +104,14 @@ namespace PickItUp.Behaviors
             {
                 _agentStates.Remove(agent);
                 Patches.AgentWeaponDropPatch.RemoveDisarmCooldown(agent);
-                return false;
-            }
+                    return false;
+                }
 
             if (!_agentStates.TryGetValue(agent, out var state))
             {
                 if (!agent.IsAIControlled || !agent.IsHuman)
                 {
-                    return false;
+                return false;
                 }
 
                 // 检查任务模式
@@ -119,8 +119,8 @@ namespace PickItUp.Behaviors
                 if (missionMode != MissionMode.Battle &&
                     missionMode != MissionMode.Duel &&
                     missionMode != MissionMode.Tournament)
-                {
-                    return false;
+            {
+                return false;
                 }
 
                 // 通过预检查后才创建状态
@@ -148,11 +148,13 @@ namespace PickItUp.Behaviors
         {
             try
             {
+                if (!WeaponCheck.IsShieldPickupEnabled())
+                {
+                    return false;
+                }
+
                 if (agent.HasShieldCached)
                 {
-#if DEBUG
-                    DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 已有盾牌，不需要拾取");
-#endif
                     return false;
                 }
 
@@ -174,8 +176,8 @@ namespace PickItUp.Behaviors
 #endif
                     return false;
                 }
-
-                // 重要：检查是否有空闲装备槽位（恢复原始逻辑）
+                
+                // 检查是否有空闲装备槽位
                 bool hasEmptySlot = false;
                 for (EquipmentIndex i = EquipmentIndex.WeaponItemBeginSlot; i <= EquipmentIndex.Weapon3; i++)
                 {
@@ -185,7 +187,7 @@ namespace PickItUp.Behaviors
                         break;
                     }
                 }
-
+                
                 if (!hasEmptySlot)
                 {
 #if DEBUG
@@ -193,18 +195,14 @@ namespace PickItUp.Behaviors
 #endif
                     return false;
                 }
-
                 // 盾牌需求检查缓存
                 if (_agentStates.TryGetValue(agent, out var state))
                 {
                     float currentTime = Mission.Current.CurrentTime;
-                    // 如果缓存还有效（1秒内），直接返回缓存结果
                     if (currentTime - state.LastShieldCheckTime < 1.0f)
                     {
                         return state.CanPickupShield;
                     }
-
-                    // 更新缓存时间
                     state.LastShieldCheckTime = currentTime;
                 }
                 else
@@ -213,14 +211,12 @@ namespace PickItUp.Behaviors
                     _agentStates[agent] = state;
                     state.LastShieldCheckTime = Mission.Current.CurrentTime;
                 }
-
-                // 使用空间分区找到附近的盾牌
+                
                 bool canPickupAnyShield = false;
                 var agentPosition = agent.Position;
                 var cellX = (int)(agentPosition.x / SPATIAL_CELL_SIZE);
                 var cellZ = (int)(agentPosition.z / SPATIAL_CELL_SIZE);
-
-                // 只搜索最近的格子，减少遍历
+                
                 for (int dx = -1; dx <= 1 && !canPickupAnyShield; dx++)
                 {
                     for (int dz = -1; dz <= 1 && !canPickupAnyShield; dz++)
@@ -228,7 +224,6 @@ namespace PickItUp.Behaviors
                         var cell = (cellX + dx, cellZ + dz);
                         if (_spatialWeaponCache.TryGetValue(cell, out var weapons))
                         {
-                            // 寻找第一个可拾取的盾牌
                             foreach (var weapon in weapons)
                             {
                                 if (WeaponCheck.IsItemShield(weapon) && !weapon.IsRemoved && agent.CanQuickPickUp(weapon))
@@ -240,17 +235,16 @@ namespace PickItUp.Behaviors
                         }
                     }
                 }
-
-                // 缓存结果
+                
                 state.CanPickupShield = canPickupAnyShield;
-
+                
                 if (!canPickupAnyShield)
                 {
 #if DEBUG
                     DebugHelper.Log("PickUpWeapon", $"Agent {agent.Name} 没有找到可拾取的盾牌");
 #endif
                 }
-
+                
                 return canPickupAnyShield;
             }
             catch (Exception ex)
@@ -286,7 +280,7 @@ namespace PickItUp.Behaviors
                 bool needsWeapon = !agent.HasMeleeWeaponCached && !agent.HasSpearCached;
 
                 // 检查是否需要盾牌
-                bool needsShield = CanAgentPickupShield(agent);
+                bool needsShield = WeaponCheck.IsShieldPickupEnabled() && CanAgentPickupShield(agent);
 
                 // 如果两种都不需要，直接返回false
                 if (!needsWeapon && !needsShield)
@@ -508,7 +502,7 @@ namespace PickItUp.Behaviors
 
             // 判断是否需要武器和盾牌
             bool needsWeapon = !agent.HasMeleeWeaponCached && !agent.HasSpearCached;
-            bool needsShield = CanAgentPickupShield(agent);
+            bool needsShield = WeaponCheck.IsShieldPickupEnabled() && CanAgentPickupShield(agent);
 
             // 过滤有效武器并按距离排序
             if (needsWeapon)
@@ -676,6 +670,14 @@ namespace PickItUp.Behaviors
                         try
                         {
                             targetSlot = MissionEquipment.SelectWeaponPickUpSlot(agent, spawnedItem.WeaponCopy, spawnedItem.IsStuckMissile());
+                            if (targetSlot == EquipmentIndex.None)
+                            {
+                                continue;
+                            }
+                            if (!agent.Equipment[targetSlot].IsEmpty)
+                            {
+                                continue;
+                            }
                         }
                         catch (Exception ex)
                         {

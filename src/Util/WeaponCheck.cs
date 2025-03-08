@@ -8,6 +8,15 @@ namespace PickItUp.Util
     public static class WeaponCheck
     {
         /// <summary>
+        /// 检查是否允许盾牌拾取
+        /// </summary>
+        /// <returns>是否允许盾牌拾取</returns>
+        public static bool IsShieldPickupEnabled()
+        {
+            return Settings.Settings.Instance?.EnableShieldPickup ?? false;
+        }
+
+        /// <summary>
         /// 检查武器是否为盾牌
         /// </summary>
         /// <param name="weaponClass">武器类型</param>
@@ -43,6 +52,12 @@ namespace PickItUp.Util
         {
             try
             {
+                // 如果盾牌拾取被禁用，直接返回false
+                if (!IsShieldPickupEnabled())
+                {
+                    return false;
+                }
+
                 if (spawnedItem == null || spawnedItem.WeaponCopy.IsEmpty || spawnedItem.WeaponCopy.Item == null || spawnedItem.WeaponCopy.Item.WeaponComponent == null) return false;
                 var weaponClass = spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass;
                 return IsShield(weaponClass);
@@ -143,13 +158,11 @@ namespace PickItUp.Util
                     return false;
                 }
 
-                // 判断是否为盾牌
+                // 判断是否为盾牌，并检查是否允许盾牌拾取
                 bool isShield = IsShield(weaponClass);
-
-                // 如果是盾牌，允许拾取
                 if (isShield)
                 {
-                    return true;
+                    return IsShieldPickupEnabled();
                 }
 
                 return IsMeleeWeapon(spawnedItem.WeaponCopy.Item.WeaponComponent);
