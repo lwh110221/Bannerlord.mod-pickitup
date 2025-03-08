@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Module>
-    <Name value="Pick It Up -shield version"/>
+    <Name value="Pick It Up"/>
     <Id value="PickItUp"/>
-    <Version value="v1.2.3"/>
+    <Version value="v1.2.4.1"/>
     <author value="Ahao221"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>

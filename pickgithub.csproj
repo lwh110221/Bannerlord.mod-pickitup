@@ -84,14 +84,8 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Compile Include="src\*\*.cs" />
     <Compile Include="src\SubModule.cs" />
-    <Compile Include="src\Behaviors\PickUpWeaponBehavior.cs" />
-    <Compile Include="src\Settings\Settings.cs" />
-    <Compile Include="src\DebugHelper.cs" />
-    <Compile Include="src\Patches\AgentWeaponDropPatch.cs" />
-    <Compile Include="src\Behaviors\DroppedItemManager.cs" />
-    <Compile Include="src\Patches\DroppedItemPatch.cs" />
-    <Compile Include="src\Behaviors\CCmodAct.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
