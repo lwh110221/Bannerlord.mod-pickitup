@@ -6,6 +6,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 using System;
+using System.Linq;
 
 namespace PickItUp
 {
@@ -39,17 +40,16 @@ namespace PickItUp
                 {
                     _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
                 }
-
-                _extendHarmony.PatchAll(typeof(ReloadReset).Assembly);
+                _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
 
 #if DEBUG
-                InformationManager.DisplayMessage(new InformationMessage("ReloadReset补丁已加载", Colors.Green));
+                DebugHelper.Log("SubModule", "ReloadReset补丁已加载");
 #endif
             }
             catch (Exception ex)
             {
 #if DEBUG
-                InformationManager.DisplayMessage(new InformationMessage($"初始化补丁时出错: {ex.Message}", Colors.Red));
+                DebugHelper.LogError("SubModule", "初始化补丁时出错", ex);
 #endif
             }
         }
@@ -66,7 +66,13 @@ namespace PickItUp
                 if (_mainHarmony == null)
                 {
                     _mainHarmony = new Harmony("mod.bannerlord.pickitup");
-                    _mainHarmony.PatchAll(Assembly.GetExecutingAssembly());
+                    // 排除ReloadReset类，只patch其他类
+                    var types = Assembly.GetExecutingAssembly().GetTypes()
+                        .Where(t => t != typeof(ReloadReset));
+                    foreach (var type in types)
+                    {
+                        _mainHarmony.CreateClassProcessor(type).Patch();
+                    }
 #if DEBUG
                     InformationManager.DisplayMessage(new InformationMessage("主Mod补丁已加载", Colors.Green));
 #endif
@@ -89,8 +95,7 @@ namespace PickItUp
                 {
                     _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
                 }
-
-                _extendHarmony.PatchAll(typeof(ReloadReset).Assembly);
+                _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
 
 #if DEBUG
                 InformationManager.DisplayMessage(new InformationMessage("已重新应用ReloadReset补丁", Colors.Green));
