@@ -133,6 +133,10 @@ namespace PickItUp.Patches
                     if (weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Bolt ||
                         weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Arrow)
                     {
+                        if (__instance.IsPlayerControlled)
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage("Ammo out!", Colors.Red));
+                        }
                         return;
                     }
                     if (Settings.Settings.Instance?.DropBag == true)

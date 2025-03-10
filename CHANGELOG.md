@@ -1,5 +1,5 @@
 # Pickitup 霸主AI优化调整
-- Discord ：https://discord.gg/YTY8EWBZ
+- Discord ：https://discord.gg/qYqPm4eY
 - 反馈q群1026710748
 
 ### mod需要四前置
