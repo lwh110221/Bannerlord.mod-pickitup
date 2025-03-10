@@ -1078,8 +1078,9 @@ namespace PickItUp.Behaviors
                 _cachedWeapons.Clear();
                 _agentStates.Clear();
 
-                // 同步清理所有缴械状态
                 Patches.AgentWeaponDropPatch.ClearAllCooldowns();
+
+                CCmodAct.ClearCache();
 
 #if DEBUG
                 DebugHelper.Log("PickUpWeapon", $"任务结束，清理状态 - Agents: {agentCount}, Weapons: {weaponCount}");
