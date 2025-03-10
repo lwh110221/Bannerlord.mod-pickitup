@@ -19,26 +19,21 @@ namespace PickItUp.Util
         /// <summary>
         /// 检查武器是否为盾牌
         /// </summary>
-        /// <param name="weaponClass">武器类型</param>
+        /// <param name="spawnedItem">物品</param>
         /// <returns>是否为盾牌</returns>
-        public static bool IsShield(WeaponClass weaponClass)
+        public static bool IsShield(SpawnedItemEntity spawnedItem)
         {
-            return weaponClass == WeaponClass.SmallShield || weaponClass == WeaponClass.LargeShield;
+            return spawnedItem.WeaponCopy.Item.PrimaryWeapon.IsShield;
         }
 
         /// <summary>
-        /// 检查武器是否为单手武器
+        /// 检查武器是否可用作近战的投掷武器
         /// </summary>
         /// <param name="weaponClass">武器类型</param>
-        /// <returns>是否为单手武器</returns>
-        public static bool IsOneHandedWeapon(WeaponClass weaponClass)
+        /// <returns>是否为双用投掷武器</returns>
+        public static bool IsThrowableMeleeWeapon(WeaponClass weaponClass)
         {
-            return weaponClass == WeaponClass.OneHandedSword ||
-                   weaponClass == WeaponClass.OneHandedAxe ||
-                   weaponClass == WeaponClass.Mace ||
-                   weaponClass == WeaponClass.OneHandedPolearm ||
-                   weaponClass == WeaponClass.Dagger ||
-                   weaponClass == WeaponClass.ThrowingAxe ||
+            return weaponClass == WeaponClass.ThrowingAxe ||
                    weaponClass == WeaponClass.ThrowingKnife ||
                    weaponClass == WeaponClass.Javelin;
         }
@@ -59,8 +54,7 @@ namespace PickItUp.Util
                 }
 
                 if (spawnedItem == null || spawnedItem.WeaponCopy.IsEmpty || spawnedItem.WeaponCopy.Item == null || spawnedItem.WeaponCopy.Item.WeaponComponent == null) return false;
-                var weaponClass = spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass;
-                return IsShield(weaponClass);
+                return IsShield(spawnedItem);
             }
             catch
             {
@@ -152,14 +146,15 @@ namespace PickItUp.Util
                 bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
                                       weaponClass == WeaponClass.ThrowingKnife ||
                                       weaponClass == WeaponClass.Javelin;
+                bool isQuiverAndNotEmpty = spawnedItem.IsQuiverAndNotEmpty();
 
-                if (isThrowingWeapon && spawnedItem.WeaponCopy.Amount <= 0)
+                if (isThrowingWeapon && !isQuiverAndNotEmpty)
                 {
                     return false;
                 }
 
                 // 判断是否为盾牌，并检查是否允许盾牌拾取
-                bool isShield = IsShield(weaponClass);
+                bool isShield = IsShield(spawnedItem);
                 if (isShield)
                 {
                     return IsShieldPickupEnabled();
@@ -191,7 +186,7 @@ namespace PickItUp.Util
             try
             {
                 // 检查是否不能在马上使用的标志
-                return (weaponComponent.PrimaryWeapon.WeaponFlags & WeaponFlags.NotUsableWithOneHand) != WeaponFlags.NotUsableWithOneHand;
+                return (weaponComponent.PrimaryWeapon.WeaponFlags & WeaponFlags.NotUsableWithOneHand) == 0;
             }
             catch (Exception ex)
             {

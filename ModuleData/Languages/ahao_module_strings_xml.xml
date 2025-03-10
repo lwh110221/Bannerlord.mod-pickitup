@@ -9,14 +9,8 @@
     <string id="ahao_pickup_delay_hint" text="The time (in seconds) AI remains disoriented after losing weapon before attempting to pick it up. Default: 1.5 seconds" />
     <string id="ahao_search_radius" text="Search Radius" />
     <string id="ahao_search_radius_hint" text="The range (in meters) AI searches for dropped weapons. Default: 5.0 meters" />
-    <!-- <string id="ahao_pickup_cooldown" text="Pickup Cooldown" />
-    <string id="ahao_pickup_cooldown_hint" text="The interval (in seconds) between AI's pickup attempts. Default: 1.0 second" />
-    <string id="ahao_cleanup_interval" text="Cleanup Interval" />
-    <string id="ahao_cleanup_interval_hint" text="The interval (in seconds) for memory cleanup. Default: 30.0 seconds" />
-    <string id="ahao_cache_lifetime" text="Cache Lifetime" />
-    <string id="ahao_cache_lifetime_hint" text="The duration (in seconds) cached data is retained. Default: 60.0 seconds" />
-    <string id="ahao_pickup_settings" text="Pickup Settings" />
-    <string id="ahao_huancun_settings" text="Cache Settings - Optimizations for overall game performance, recommended to keep default" /> -->
+    <string id="ahao_drop_bag" text="Dropped empty ammo pouches" />
+    <string id="ahao_drop_bag_hint" text="If enabled, empty 'thrown weapon' ammo pouches will be dropped. Default: Enabled" />
     <string id="ahao_items" text="Enable items do not disappear" />
     <string id="ahao_items_hint" text="If enabled, dropped weapons will remain in the battlefield indefinitely. Default: On" />
     <string id="ahao_items_settings" text="Items Setting" />

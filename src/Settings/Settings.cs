@@ -36,6 +36,11 @@ namespace PickItUp.Settings
         [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 1)]
         public float SearchRadius { get; set; } = 5.0f;
 
+        [SettingPropertyBool("{=ahao_drop_bag}Dropped empty ammo pouches", RequireRestart = false,
+            HintText = "{=ahao_drop_bag_hint}If enabled, empty 'thrown weapon' ammo pouches will be dropped. Default: Enabled", Order = 2)]
+        [SettingPropertyGroup("{=ahao_pickup_settings}Pickup Settings", GroupOrder = 1)]
+        public bool DropBag { get; set; } = true;
+
         // 武器类型设置
         [SettingPropertyGroup("{=ahao_weapon_types}Allow Weapon Types", GroupOrder = 3)]
         [SettingPropertyBool("{=ahao_one_handed_sword}One Handed Sword", RequireRestart = false,
@@ -88,7 +93,7 @@ namespace PickItUp.Settings
         public bool PickupThrowingWeapons { get; set; } = true;
 
         // 武器持久化类型设置
-        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types", GroupOrder = 4)]
+        [SettingPropertyGroup("{=ahao_persistence_types}Non-disappearing item types", GroupOrder = 5)]
         [SettingPropertyBool("{=ahao_persist_melee}Melee Weapons", RequireRestart = false,
             HintText = "{=ahao_persist_melee_hint}Keep melee weapons (swords, axes, maces, etc.) do not disappear on battlefield", Order = 0)]
         public bool PersistMeleeWeapons { get; set; } = true;
@@ -122,9 +127,10 @@ namespace PickItUp.Settings
 
         public Settings()
         {
-            EnableWeaponPersistence = false;  // 默认启用武器持久化
-            PickupDelay = 1.5f;        //懵逼时间
-            SearchRadius = 5.0f;       //搜索范围
+            EnableWeaponPersistence = false;
+            PickupDelay = 1.5f;
+            SearchRadius = 5.0f;
+            DropBag = true;
             ShowStatusMessage = true;
             PersistMeleeWeapons = true;
             PersistRangedWeapons = true;

@@ -130,14 +130,22 @@ namespace PickItUp.Patches
                 if (amount == 0)
                 {
                     MissionWeapon weapon = __instance.Equipment[slotIndex];
-                    if (weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Bolt)
+                    if (weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Bolt ||
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Arrow)
                     {
                         return;
                     }
-                    __instance.DropItem(slotIndex);
+                    if (Settings.Settings.Instance?.DropBag == true)
+                    {
+                        __instance.DropItem(slotIndex);
+                    }
+                    else
+                    {
+                        __instance.RemoveEquippedWeapon(slotIndex);
+                    }
                     if (__instance.IsPlayerControlled)
                     {
-                        InformationManager.DisplayMessage(new InformationMessage("Out of ammo!", Colors.Red));
+                        InformationManager.DisplayMessage(new InformationMessage("Ammo out!", Colors.Red));
                     }
                 }
             }

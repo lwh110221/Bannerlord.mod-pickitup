@@ -13,16 +13,20 @@ namespace PickItUp.Behaviors
     {
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
         #region 常量
-        private float SearchRadius => Settings.Settings.Instance?.SearchRadius ?? 5.0f;        //搜索半径
-        private const float PICKUP_ANIMATION_DURATION = 0.7f; // 拾取动画持续时间
-        private const int MAX_AGENTS_PER_TICK = 8;  // 每tick处理的最大AI数量
-        private const float WEAPON_CACHE_UPDATE_INTERVAL = 0.5f; // 武器缓存更新间隔
+        private float SearchRadius => Settings.Settings.Instance?.SearchRadius ?? 5.0f;   
+        private const float High =1.2f;
+        private const float HIGH_WEAPON_RECHECK_TIME = 4.0f;
+        private const float WEAPON_CHASE_TIMEOUT = 15f;
+        private const float PICKUP_ANIMATION_DURATION = 0.7f;
+        private const int MAX_AGENTS_PER_TICK = 8;
+        private const float WEAPON_CACHE_UPDATE_INTERVAL = 0.5f;
         private const int INITIAL_LIST_CAPACITY = 32;
-        private const float AGENT_CHECK_INTERVAL = 1.0f; // 检查间隔
-        private const float SPATIAL_CELL_SIZE = 5f;    // 空间分区大小
+        private const float AGENT_CHECK_INTERVAL = 1.0f;
+        private const float SPATIAL_CELL_SIZE = 5f;
         private float _lastWeaponCacheUpdateTime;
         private bool _hasDroppedWeapons;
         private int _currentAgentIndex;
+        private readonly Dictionary<SpawnedItemEntity, (float Height, float Time)> _highWeapons = new Dictionary<SpawnedItemEntity, (float, float)>();
         private readonly List<SpawnedItemEntity> _cachedWeapons = new List<SpawnedItemEntity>(INITIAL_LIST_CAPACITY);
         private readonly Dictionary<Agent, AgentState> _agentStates = new Dictionary<Agent, AgentState>();
         private readonly Dictionary<(int x, int z), List<SpawnedItemEntity>> _spatialWeaponCache = new Dictionary<(int x, int z), List<SpawnedItemEntity>>();
@@ -69,6 +73,7 @@ namespace PickItUp.Behaviors
             public float LastStateUpdateTime;
             public float LastShieldCheckTime;
             public bool CanPickupShield;
+            public float WeaponTargetStartTime;
 
             public void Reset()
             {
@@ -81,6 +86,7 @@ namespace PickItUp.Behaviors
                 LastStateUpdateTime = 0f;
                 LastShieldCheckTime = 0f;
                 CanPickupShield = false;
+                WeaponTargetStartTime = 0f;
             }
         }
         /// <summary>
@@ -158,15 +164,19 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                // 检查主手是否装备单手武器
+                // 检查主手是否装备单手或投掷武器
                 EquipmentIndex mainHandIndex = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
                 bool hasOneHandedWeapon = false;
 
                 if (mainHandIndex != EquipmentIndex.None && !agent.Equipment[mainHandIndex].IsEmpty &&
                     agent.Equipment[mainHandIndex].Item?.WeaponComponent != null)
                 {
-                    var weaponClass = agent.Equipment[mainHandIndex].Item.WeaponComponent.PrimaryWeapon.WeaponClass;
-                    hasOneHandedWeapon = WeaponCheck.IsOneHandedWeapon(weaponClass);
+                    var weaponComponent = agent.Equipment[mainHandIndex].Item.WeaponComponent;
+                    var primaryWeapon = weaponComponent.PrimaryWeapon;
+                    bool isOneHandedMelee = primaryWeapon?.IsOneHanded == true;
+                    bool isThrowableMelee = WeaponCheck.IsThrowableMeleeWeapon(primaryWeapon.WeaponClass);
+                    
+                    hasOneHandedWeapon = isOneHandedMelee || isThrowableMelee;
                 }
 
                 if (!hasOneHandedWeapon)
@@ -330,8 +340,36 @@ namespace PickItUp.Behaviors
         {
             try
             {
-                if (weapon == null || weapon.GameEntity == null) return;
+                if (weapon == null ||
+                 weapon.GameEntity == null ||
+                   weapon.HasAIMovingTo ||
+                   weapon.WeaponCopy.IsAnyAmmo() && weapon.WeaponCopy.Amount <= 0 ||
+                   weapon.WeaponCopy.Item.PrimaryWeapon.IsBow||
+                   weapon.WeaponCopy.Item.PrimaryWeapon.IsCrossBow||
+                   weapon.IsBanner())
+                   return;
 
+                // 检查武器是否卡在物体上
+                if (weapon.IsStuckMissile())
+                {
+                    // 获取武器的全局位置
+                    var weaponPosition = weapon.GameEntity.GlobalPosition;
+                    // 获取地形高度
+                    float terrainHeight = Mission.Current.Scene.GetGroundHeightAtPosition(new Vec3(weaponPosition.x, weaponPosition.y, 0));
+                    
+                    // 计算武器与地形之间的高度差
+                    float heightDifference = weaponPosition.z - terrainHeight;
+                    // 如果高度差超过阈值，则添加到高处武器列表
+                    if (heightDifference > High)
+                    {
+#if DEBUG
+                        InformationManager.DisplayMessage(new InformationMessage($"高度过高: {heightDifference}米，添加到待检查列表", Colors.Yellow));
+#endif
+                        _highWeapons[weapon] = (heightDifference, Mission.Current.CurrentTime);
+                        return;
+                    }
+                }
+               
                 var position = weapon.GameEntity.GlobalPosition;
                 var cellX = (int)(position.x / SPATIAL_CELL_SIZE);
                 var cellZ = (int)(position.z / SPATIAL_CELL_SIZE);
@@ -342,7 +380,7 @@ namespace PickItUp.Behaviors
                     weaponList = GetListFromPool();
                     _spatialWeaponCache[cell] = weaponList;
                 }
-
+                
                 if (!weaponList.Contains(weapon))
                 {
                     weaponList.Add(weapon);
@@ -419,6 +457,20 @@ namespace PickItUp.Behaviors
 
             try
             {
+                var highWeaponsToRemove = new List<SpawnedItemEntity>();
+                foreach (var weapon in _highWeapons.Keys)
+                {
+                    if (weapon == null || weapon.IsRemoved)
+                    {
+                        highWeaponsToRemove.Add(weapon);
+                    }
+                }
+                
+                foreach (var weapon in highWeaponsToRemove)
+                {
+                    _highWeapons.Remove(weapon);
+                }
+                
                 foreach (var missionObject in Mission.Current.MissionObjects)
                 {
                     if (missionObject is SpawnedItemEntity spawnedItem)
@@ -511,10 +563,9 @@ namespace PickItUp.Behaviors
                 var nearestWeapon = nearbyWeapons
                     .Where(w => w != null &&
                               !w.IsRemoved &&
-                              !w.IsStuckMissile() &&
                               !WeaponCheck.IsItemShield(w) && // 使用WeaponCheck
                               w.GameEntity.GlobalPosition.Distance(agentPosition) <= SearchRadius &&
-                              (!w.IsStuckMissile() || agent.CanReachAndUseObject(w, w.GameEntity.GlobalPosition.DistanceSquared(agentPosition))))
+                              (!agent.HasMount || WeaponCheck.CanUseWeaponOnHorseback(w.WeaponCopy.Item.WeaponComponent))) // 添加骑马限制
                     .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
                     .FirstOrDefault();
 
@@ -561,6 +612,25 @@ namespace PickItUp.Behaviors
 
             try
             {
+                if (_agentStates.TryGetValue(agent, out var state))
+                {
+                    float currentTime = Mission.Current.CurrentTime;
+                    
+                    if (state.TargetWeapon != weapon || state.WeaponTargetStartTime == 0f)
+                    {
+                        state.WeaponTargetStartTime = currentTime;
+                        state.TargetWeapon = weapon;
+                    }
+                    else if (state.WeaponTargetStartTime > 0f && currentTime - state.WeaponTargetStartTime > WEAPON_CHASE_TIMEOUT)
+                    {
+                        RemoveWeaponFromCache(weapon);
+                        ResetAgentPickupState(agent);
+#if DEBUG
+                        InformationManager.DisplayMessage(new InformationMessage($"武器{weapon.WeaponCopy.Item.Name}无法到达，移除", Colors.Yellow));
+#endif
+                        return;
+                    }
+                }
                 if ((Mission.Current.IsSiegeBattle || Mission.Current.IsSallyOutBattle) && !agent.IsUsingGameObject)
                 {
                     // 攻城战使用优化后的移动方法
@@ -753,6 +823,8 @@ namespace PickItUp.Behaviors
                     ReturnListToPool(lists);
                 }
                 _spatialWeaponCache.Clear();
+
+                _highWeapons.Clear();
             }
             catch (Exception ex)
             {
@@ -813,16 +885,21 @@ namespace PickItUp.Behaviors
         /// <param name="dt">时间间隔</param>
         public override void OnMissionTick(float dt)
         {
+            base.OnMissionTick(dt);
             try
             {
                 UpdateWeaponCache();
 
-                // 如果没有掉落武器，跳过大部分处理
+                if (_highWeapons.Count > 0)
+                {
+                    CheckHighWeapons();
+                }
+
                 if (!_hasDroppedWeapons)
                 {
                     return;
                 }
-
+                
                 float currentTime = Mission.Current.CurrentTime;
 
                 // 处理正在进行拾取动画的AI
@@ -1015,6 +1092,81 @@ namespace PickItUp.Behaviors
 #if DEBUG
                 DebugHelper.Log("PickUpWeapon", $"清理Mission结束状态时出错: {ex.Message}");
 #endif
+            }
+        }
+        #endregion
+        #region 检查武器高度
+        private void CheckHighWeapons()
+        {
+            float currentTime = Mission.Current.CurrentTime;
+            var weaponsToRemove = new List<SpawnedItemEntity>();
+            
+            foreach (var kvp in _highWeapons)
+            {
+                var weapon = kvp.Key;
+                var (originalHeight, recordTime) = kvp.Value;
+                
+                // 如果武器已被移除或不存在
+                if (weapon == null || weapon.IsRemoved || weapon.GameEntity == null)
+                {
+                    weaponsToRemove.Add(weapon);
+                    continue;
+                }
+                
+                // 检查是否到了重新检查的时间
+                if (currentTime - recordTime >= HIGH_WEAPON_RECHECK_TIME)
+                {
+                    // 获取武器的全局位置
+                    var weaponPosition = weapon.GameEntity.GlobalPosition;
+                    // 获取地形高度
+                    float terrainHeight = Mission.Current.Scene.GetGroundHeightAtPosition(new Vec3(weaponPosition.x, weaponPosition.y, 0));
+                    
+                    // 计算武器与地形之间的高度差
+                    float heightDifference = weaponPosition.z - terrainHeight;
+                    
+                    // 如果高度差变小了（说明已经落地或正在下落）
+                    if (heightDifference < originalHeight)
+                    {
+                        if (heightDifference <= High)
+                        {
+#if DEBUG
+                            InformationManager.DisplayMessage(new InformationMessage($"武器已落地，添加到缓存", Colors.Green));
+#endif
+                            // 添加到缓存
+                            var position = weapon.GameEntity.GlobalPosition;
+                            var cellX = (int)(position.x / SPATIAL_CELL_SIZE);
+                            var cellZ = (int)(position.z / SPATIAL_CELL_SIZE);
+                            var cell = (cellX, cellZ);
+
+                            if (!_spatialWeaponCache.TryGetValue(cell, out var weaponList))
+                            {
+                                weaponList = GetListFromPool();
+                                _spatialWeaponCache[cell] = weaponList;
+                            }
+                            
+                            if (!weaponList.Contains(weapon))
+                            {
+                                weaponList.Add(weapon);
+                                _weaponCellCache[weapon] = cell;
+                                _hasDroppedWeapons = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+#if DEBUG
+                        InformationManager.DisplayMessage(new InformationMessage($"武器高度未变化，移除", Colors.Red));
+#endif
+                    }
+                    
+                    weaponsToRemove.Add(weapon);
+                }
+            }
+            
+            // 从高处武器列表中移除已处理的武器
+            foreach (var weapon in weaponsToRemove)
+            {
+                _highWeapons.Remove(weapon);
             }
         }
         #endregion

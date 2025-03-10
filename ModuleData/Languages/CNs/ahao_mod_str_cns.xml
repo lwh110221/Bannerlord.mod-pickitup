@@ -14,6 +14,9 @@
     <string id="ahao_search_radius" text="搜索范围" />
     <string id="ahao_search_radius_hint" text="AI搜索地上武器的范围（米）。默认：5.0 米" />
 
+    <string id="ahao_drop_bag" text="丢弃空弹药袋" />
+    <string id="ahao_drop_bag_hint" text="如果启用，空的'投掷物'弹药袋将被丢下。默认：开启" />
+
     <string id="ahao_items" text="启用物品不消失"/>
     <string id="ahao_items_hint" text="启用后，掉落的武器将一直留在战场上。默认：开启"/>
     <string id="ahao_items_settings" text="物品设置"/>
