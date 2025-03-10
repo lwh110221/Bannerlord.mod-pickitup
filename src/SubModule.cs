@@ -13,45 +13,45 @@ namespace PickItUp
     public class SubModule : MBSubModuleBase
     {
         private static Harmony _mainHarmony;
-        private static Harmony _extendHarmony;
-        private ReloadReset _reloadReset;
+        // private static Harmony _extendHarmony;
+        // private ReloadReset _reloadReset;
 
         protected override void OnSubModuleLoad()
         {
-            try
-            {
-                _extendHarmony = new Harmony("mod.bannerlord.pickitupextend");
-                _reloadReset = new ReloadReset();
+//             try
+//             {
+//                 _extendHarmony = new Harmony("mod.bannerlord.pickitupextend");
+//                 _reloadReset = new ReloadReset();
                 
-                if (!_reloadReset.HasRBMPatches())
-                {
-                    return;
-                }
+//                 if (!_reloadReset.HasRBMPatches())
+//                 {
+//                     return;
+//                 }
 
-                var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
-                var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
+//                 var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
+//                 var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
 
-                if (originalWeaponEquipped != null)
-                {
-                    _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
-                }
+//                 if (originalWeaponEquipped != null)
+//                 {
+//                     _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
+//                 }
 
-                if (originalWieldedItemChange != null)
-                {
-                    _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
-                }
-                _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
+//                 if (originalWieldedItemChange != null)
+//                 {
+//                     _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
+//                 }
+//                 _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
 
-#if DEBUG
-                DebugHelper.Log("SubModule", "ReloadReset补丁已加载");
-#endif
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.LogError("SubModule", "初始化补丁时出错", ex);
-#endif
-            }
+// #if DEBUG
+//                 DebugHelper.Log("SubModule", "ReloadReset补丁已加载");
+// #endif
+//             }
+//             catch (Exception ex)
+//             {
+// #if DEBUG
+//                 DebugHelper.LogError("SubModule", "初始化补丁时出错", ex);
+// #endif
+//             }
         }
 
         public override void OnGameInitializationFinished(Game game)
@@ -78,28 +78,28 @@ namespace PickItUp
 #endif
                 }
                 
-                if (!_reloadReset.HasRBMPatches())
-                {
-                    return;
-                }
+//                 if (!_reloadReset.HasRBMPatches())
+//                 {
+//                     return;
+//                 }
 
-                var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
-                var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
+//                 var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
+//                 var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
 
-                if (originalWeaponEquipped != null)
-                {
-                    _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
-                }
+//                 if (originalWeaponEquipped != null)
+//                 {
+//                     _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
+//                 }
 
-                if (originalWieldedItemChange != null)
-                {
-                    _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
-                }
-                _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
+//                 if (originalWieldedItemChange != null)
+//                 {
+//                     _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
+//                 }
+//                 _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
 
-#if DEBUG
-                InformationManager.DisplayMessage(new InformationMessage("已重新应用ReloadReset补丁", Colors.Green));
-#endif
+// #if DEBUG
+//                 InformationManager.DisplayMessage(new InformationMessage("已重新应用ReloadReset补丁", Colors.Green));
+// #endif
             }
             catch (Exception ex)
             {
