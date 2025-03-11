@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <!-- 
+    - If you are using RBM, this setting resets the bow/arrow loading mechanism and arrow capacity to the game's original version
+    - Specific reset content:
+    1. All bow arrow capacity is reset to 1, eliminating the triple-shot situation
+    2. Arrow loading speed is restored to the original version
+
+    - 如果你使用RBM,此设置的功能是重置为游戏原版的弓箭填装机制和弓箭的装填数
+    - 具体重置内容：
+    1.所有弓箭的装填数重置为1，不再有三连射情况
+    2.弓箭的填装速度恢复为原版
+     -->
+
+    <!-- 
+    true - Enable
+    false - Disable
+    -->
+    <EnableReloadResetPatch>true</EnableReloadResetPatch>
+</ModSettings>

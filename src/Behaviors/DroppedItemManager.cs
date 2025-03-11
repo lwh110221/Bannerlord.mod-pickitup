@@ -45,7 +45,7 @@ namespace PickItUp.Behaviors
         public DroppedItemManager()
         {
             _droppedItems = new MBBindingList<MissionObject>();
-            _lastPersistenceState = Settings.Settings.Instance.EnableWeaponPersistence;
+            _lastPersistenceState = Settings.McmSettings.Instance.EnableWeaponPersistence;
 #if DEBUG
             LogDebug("武器持久化已初始化");
 #endif
@@ -59,7 +59,7 @@ namespace PickItUp.Behaviors
             if (_settingCheckTimer >= SETTING_CHECK_INTERVAL)
             {
                 _settingCheckTimer = 0f;
-                bool currentState = Settings.Settings.Instance.EnableWeaponPersistence;
+                bool currentState = Settings.McmSettings.Instance.EnableWeaponPersistence;
                 if (_lastPersistenceState != currentState)
                 {
                     OnPersistenceSettingChanged(currentState);
@@ -67,12 +67,12 @@ namespace PickItUp.Behaviors
                 }
             }
 
-            if (!_hasDisplayedMessage && Settings.Settings.Instance.ShowStatusMessage)
+            if (!_hasDisplayedMessage && Settings.McmSettings.Instance.ShowStatusMessage)
             {
                 _hasDisplayedMessage = true;
 
-                string statusEN = Settings.Settings.Instance.EnableWeaponPersistence ? "ON" : "OFF";
-                string statusCN = Settings.Settings.Instance.EnableWeaponPersistence ? "已开启" : "已关闭";
+                string statusEN = Settings.McmSettings.Instance.EnableWeaponPersistence ? "ON" : "OFF";
+                string statusCN = Settings.McmSettings.Instance.EnableWeaponPersistence ? "已开启" : "已关闭";
 
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"PIU: Weapon do not disappear-{statusEN}",
@@ -143,7 +143,7 @@ namespace PickItUp.Behaviors
 
         public void RegisterDroppedItem(MissionObject item)
         {
-            if (!Settings.Settings.Instance.EnableWeaponPersistence) return;
+            if (!Settings.McmSettings.Instance.EnableWeaponPersistence) return;
 
             if (item != null && !_droppedItems.Contains(item))
             {

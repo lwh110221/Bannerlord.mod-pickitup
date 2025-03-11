@@ -13,7 +13,7 @@ namespace PickItUp.Util
         /// <returns>是否允许盾牌拾取</returns>
         public static bool IsShieldPickupEnabled()
         {
-            return Settings.Settings.Instance?.EnableShieldPickup ?? false;
+            return Settings.McmSettings.Instance?.EnableShieldPickup ?? false;
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace PickItUp.Util
                 return false;
             }
 
-            var settings = Settings.Settings.Instance;
+            var settings = Settings.McmSettings.Instance;
 
             // 根据设置检查每种武器类型
             switch (weaponClass)

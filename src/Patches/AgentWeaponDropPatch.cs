@@ -16,7 +16,7 @@ namespace PickItUp.Patches
         // 记录被缴械的Agent和时间
         private static readonly Dictionary<Agent, float> _disarmedAgentTimes = new Dictionary<Agent, float>();
 
-        private static float PickupDelay => Settings.Settings.Instance?.PickupDelay ?? 1.5f;
+        private static float PickupDelay => Settings.McmSettings.Instance?.PickupDelay ?? 1.5f;
 
         /// <summary>
         /// 检查Agent是否在缴械冷却时间内
@@ -139,7 +139,7 @@ namespace PickItUp.Patches
                         }
                         return;
                     }
-                    if (Settings.Settings.Instance?.DropBag == true)
+                    if (Settings.McmSettings.Instance?.DropBag == true)
                     {
                         __instance.DropItem(slotIndex);
                     }

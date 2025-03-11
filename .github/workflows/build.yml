@@ -40,6 +40,7 @@ jobs:
         copy "build\Release\PickItUp.dll" "PickItUp\bin\Win64_Shipping_Client\"
         copy "build\Release\PickItUp.pdb" "PickItUp\bin\Win64_Shipping_Client\"
         copy "SubModule.xml" "PickItUp\"
+        copy "config.xml" "PickItUp\"
         xcopy /E /I "ModuleData" "PickItUp\ModuleData"
         Compress-Archive -Path PickItUp -DestinationPath PickItUp.zip -Force
         
@@ -49,6 +50,7 @@ jobs:
         copy "build\Debug\PickItUp.dll" "PickItUp_Debug\bin\Win64_Shipping_Client\"
         copy "build\Debug\PickItUp.pdb" "PickItUp_Debug\bin\Win64_Shipping_Client\"
         copy "SubModule.xml" "PickItUp_Debug\"
+        copy "config.xml" "PickItUp_Debug\"
         xcopy /E /I "ModuleData" "PickItUp_Debug\ModuleData"
         Compress-Archive -Path PickItUp_Debug -DestinationPath PickItUp_Debug.zip -Force
       

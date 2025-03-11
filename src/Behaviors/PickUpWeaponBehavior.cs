@@ -13,7 +13,7 @@ namespace PickItUp.Behaviors
     {
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
         #region 常量
-        private float SearchRadius => Settings.Settings.Instance?.SearchRadius ?? 5.0f;   
+        private float SearchRadius => Settings.McmSettings.Instance?.SearchRadius ?? 5.0f;   
         private const float High =1.2f;
         private const float HIGH_WEAPON_RECHECK_TIME = 4.0f;
         private const float WEAPON_CHASE_TIMEOUT = 15f;

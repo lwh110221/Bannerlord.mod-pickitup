@@ -5,14 +5,14 @@ using TaleWorlds.Localization;
 
 namespace PickItUp.Settings
 {
-    public class Settings : AttributeGlobalSettings<Settings>
+    public class McmSettings : AttributeGlobalSettings<McmSettings>
     {
         public override string Id => "PickItUp_v1";
         public override string DisplayName => new TextObject("{=ahao_mod_name}PickItUp -Ahao221").ToString();
         public override string FolderName => "PickItUp";
         public override string FormatType => "json";
 
-        public new static Settings Instance => AttributeGlobalSettings<Settings>.Instance;
+        public new static McmSettings Instance => AttributeGlobalSettings<McmSettings>.Instance;
 
         [SettingPropertyBool("{=ahao_items}Enable Weapon Persistence",
             RequireRestart = false,
@@ -125,7 +125,7 @@ namespace PickItUp.Settings
         [SettingPropertyGroup("{=ahao_shield_settings}Shield", GroupOrder = 2)]
         public bool EnableShieldPickup { get; set; } = true;
 
-        public Settings()
+        public McmSettings()
         {
             EnableWeaponPersistence = false;
             PickupDelay = 1.5f;

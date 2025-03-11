@@ -18,7 +18,7 @@ namespace PickItUp.Patches
         private static bool ShouldPersistWeapon(ItemObject item)
         {
             if (item == null) return false;
-            var settings = Settings.Settings.Instance;
+            var settings = Settings.McmSettings.Instance;
 
             // 检查武器类型
             switch (item.ItemType)
@@ -62,7 +62,7 @@ namespace PickItUp.Patches
             try
             {
                 // Mcm检查是否启用
-                if (!Settings.Settings.Instance.EnableWeaponPersistence) return;
+                if (!Settings.McmSettings.Instance.EnableWeaponPersistence) return;
 
                 if (__instance?.WeaponCopy.Item == null || Mission.Current == null) return;
 
@@ -106,7 +106,7 @@ namespace PickItUp.Patches
         {
             try
             {
-                if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
+                if (!Settings.McmSettings.Instance.EnableWeaponPersistence) return true;
 
                 if (__instance?.WeaponCopy.Item != null && ShouldPersistWeapon(__instance.WeaponCopy.Item))
                 {
@@ -130,7 +130,7 @@ namespace PickItUp.Patches
             try
             {
                 // 如果功能被禁用，允许正常移除物品
-                if (!Settings.Settings.Instance.EnableWeaponPersistence) return true;
+                if (!Settings.McmSettings.Instance.EnableWeaponPersistence) return true;
 
                 if (missionObject is SpawnedItemEntity spawnedItem && 
                     spawnedItem.WeaponCopy.Item != null &&

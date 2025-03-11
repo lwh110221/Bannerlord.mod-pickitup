@@ -2,6 +2,7 @@ using System.Reflection;
 using HarmonyLib;
 using PickItUp.Behaviors;
 using PickItUp.Patches;
+using PickItUp.Settings;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -12,61 +13,41 @@ namespace PickItUp
 {
     public class SubModule : MBSubModuleBase
     {
+        private const string HARMONY_ID = "mod.bannerlord.pickitup";
         private static Harmony _mainHarmony;
         private static Harmony _extendHarmony;
         private ReloadReset _reloadReset;
 
         protected override void OnSubModuleLoad()
         {
+            base.OnSubModuleLoad();
             try
             {
-                _extendHarmony = new Harmony("mod.bannerlord.pickitupextend");
+                _extendHarmony = new Harmony(HARMONY_ID);
                 _reloadReset = new ReloadReset();
-                
-                if (!_reloadReset.HasRBMPatches())
+
+                if (_reloadReset.HasRBMPatches() && ModSettings.Instance.EnableReloadResetPatch)
                 {
-                    return;
+                    ApplyReloadResetPatch();
                 }
-
-                var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
-                var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
-
-                if (originalWeaponEquipped != null)
-                {
-                    _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
-                }
-
-                if (originalWieldedItemChange != null)
-                {
-                    _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
-                }
-                _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
-
-#if DEBUG
-                DebugHelper.Log("SubModule", "ReloadReset补丁已加载");
-#endif
             }
             catch (Exception ex)
             {
-#if DEBUG
-                DebugHelper.LogError("SubModule", "初始化补丁时出错", ex);
-#endif
+                DebugHelper.LogError("SubModule", "Error: " + ex.Message);
             }
         }
 
         public override void OnGameInitializationFinished(Game game)
         {
             base.OnGameInitializationFinished(game);
-            
+
             try
             {
-                var _ = Settings.Settings.Instance;
+                var _ = McmSettings.Instance;
 
-                // 加载主mod的补丁
                 if (_mainHarmony == null)
                 {
-                    _mainHarmony = new Harmony("mod.bannerlord.pickitup");
-                    // 排除ReloadReset类，只patch其他类
+                    _mainHarmony = new Harmony(HARMONY_ID);
                     var types = Assembly.GetExecutingAssembly().GetTypes()
                         .Where(t => t != typeof(ReloadReset));
                     foreach (var type in types)
@@ -77,29 +58,14 @@ namespace PickItUp
                     InformationManager.DisplayMessage(new InformationMessage("主Mod补丁已加载", Colors.Green));
 #endif
                 }
-                
-                if (!_reloadReset.HasRBMPatches())
+
+                if (_reloadReset.HasRBMPatches() && ModSettings.Instance.EnableReloadResetPatch)
                 {
-                    return;
-                }
-
-                var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
-                var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
-
-                if (originalWeaponEquipped != null)
-                {
-                    _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
-                }
-
-                if (originalWieldedItemChange != null)
-                {
-                    _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
-                }
-                _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
-
+                    ApplyReloadResetPatch();
 #if DEBUG
-                InformationManager.DisplayMessage(new InformationMessage("已重新应用ReloadReset补丁", Colors.Green));
+                    InformationManager.DisplayMessage(new InformationMessage("已重新应用ReloadReset补丁", Colors.Green));
 #endif
+                }
             }
             catch (Exception ex)
             {
@@ -115,5 +81,24 @@ namespace PickItUp
             mission.AddMissionBehavior(new PickUpWeaponBehavior());
             mission.AddMissionBehavior(new DroppedItemManager());
         }
+
+        #region RBM填装重置补丁
+        private void ApplyReloadResetPatch()
+        {
+            var originalWeaponEquipped = AccessTools.Method(typeof(Agent), "WeaponEquipped");
+            var originalWieldedItemChange = AccessTools.Method(typeof(Agent), "OnWieldedItemIndexChange");
+
+            if (originalWeaponEquipped != null)
+            {
+                _extendHarmony.Unpatch(originalWeaponEquipped, HarmonyPatchType.All, "com.rbmcombat");
+            }
+
+            if (originalWieldedItemChange != null)
+            {
+                _extendHarmony.Unpatch(originalWieldedItemChange, HarmonyPatchType.All, "com.rbmcombat");
+            }
+            _extendHarmony.CreateClassProcessor(typeof(ReloadReset)).Patch();
+        }
+        #endregion
     }
-} 
+}
