@@ -1,5 +1,6 @@
 using System;
 using TaleWorlds.Core;
+using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
 
@@ -185,8 +186,8 @@ namespace PickItUp.Util
             
             try
             {
-                // 检查是否不能在马上使用的标志
-                return (weaponComponent.PrimaryWeapon.WeaponFlags & WeaponFlags.NotUsableWithOneHand) == 0;
+                bool isPickWeapon = weaponComponent.PrimaryWeapon.WeaponDescriptionId.Contains("_Pike");
+                return !isPickWeapon;
             }
             catch (Exception ex)
             {

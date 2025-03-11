@@ -568,7 +568,6 @@ namespace PickItUp.Behaviors
                               (!agent.HasMount || WeaponCheck.CanUseWeaponOnHorseback(w.WeaponCopy.Item.WeaponComponent))) // 添加骑马限制
                     .OrderBy(w => w.GameEntity.GlobalPosition.Distance(agentPosition))
                     .FirstOrDefault();
-
                 if (nearestWeapon != null)
                 {
 #if DEBUG
