@@ -760,9 +760,21 @@ namespace PickItUp.Behaviors
                         {
                             try
                             {
-                                string animationName = agent.HasMount ?
-                                    "act_pickup_from_right_down_horseback_begin" :
-                                    "act_pickup_down_begin";
+                                string animationName;
+                                
+                                // 根据物品类型和骑马状态选择不同的动画
+                                if (WeaponCheck.IsItemShield(spawnedItem))
+                                {
+                                    animationName = agent.HasMount ?
+                                        "act_pickup_from_left_down_horseback_begin" :
+                                        "act_pickup_down_left_begin";
+                                }
+                                else
+                                {
+                                    animationName = agent.HasMount ?
+                                        "act_pickup_from_right_down_horseback_begin" :
+                                        "act_pickup_down_begin";
+                                }
 
                                 agent.SetActionChannel(0, ActionIndexCache.Create(animationName), ignorePriority: true, 0UL);
 
