@@ -162,6 +162,13 @@ namespace PickItUp.Behaviors
                 return false;
             }
 
+            if (!agent.HasLostShield())
+            {
+                return false;
+            }
+
+            /* Rework
+            // 检查主手是否装备单手或投掷武器
             EquipmentIndex mainHandIndex = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
             bool hasOneHandedWeapon = false;
 
@@ -184,6 +191,7 @@ namespace PickItUp.Behaviors
                 return false;
             }
 
+            // 检查是否有空闲装备槽位
             bool hasEmptySlot = false;
             for (int i = 0; i < (int)EquipmentIndex.NumPrimaryWeaponSlots; i++)
             {
@@ -201,6 +209,7 @@ namespace PickItUp.Behaviors
 #endif
                 return false;
             }
+            */
 
             if (_agentStates.TryGetValue(agent, out var state))
             {
