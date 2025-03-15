@@ -3,7 +3,6 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-
 namespace PickItUp.Util
 {
     public static class WeaponCheck
@@ -24,7 +23,14 @@ namespace PickItUp.Util
         /// <returns>是否为盾牌</returns>
         public static bool IsShield(SpawnedItemEntity spawnedItem)
         {
-            return spawnedItem.WeaponCopy.Item.PrimaryWeapon.IsShield;
+            if (spawnedItem == null || 
+                spawnedItem.WeaponCopy.IsEmpty || 
+                spawnedItem.WeaponCopy.Item == null || 
+                spawnedItem.WeaponCopy.Item.WeaponComponent == null ||
+                spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon == null)
+                return false;
+                
+            return spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.IsShield;
         }
 
         /// <summary>
@@ -46,21 +52,19 @@ namespace PickItUp.Util
         /// <returns>是否为盾牌</returns>
         public static bool IsItemShield(SpawnedItemEntity spawnedItem)
         {
-            try
-            {
-                // 如果盾牌拾取被禁用，直接返回false
-                if (!IsShieldPickupEnabled())
-                {
-                    return false;
-                }
-
-                if (spawnedItem == null || spawnedItem.WeaponCopy.IsEmpty || spawnedItem.WeaponCopy.Item == null || spawnedItem.WeaponCopy.Item.WeaponComponent == null) return false;
-                return IsShield(spawnedItem);
-            }
-            catch
+            if (!IsShieldPickupEnabled())
             {
                 return false;
             }
+
+            if (spawnedItem == null || 
+                spawnedItem.WeaponCopy.IsEmpty || 
+                spawnedItem.WeaponCopy.Item == null || 
+                spawnedItem.WeaponCopy.Item.WeaponComponent == null || 
+                spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon == null) 
+                return false;
+                
+            return IsShield(spawnedItem);
         }
 
         /// <summary>
@@ -133,43 +137,33 @@ namespace PickItUp.Util
         /// <returns>是否有效</returns>
         public static bool IsValidWeapon(SpawnedItemEntity spawnedItem)
         {
-            try
+            if (spawnedItem?.GameEntity == null ||
+                !spawnedItem.GameEntity.IsVisibleIncludeParents() ||
+                spawnedItem.WeaponCopy.IsEmpty ||
+                spawnedItem.WeaponCopy.Item?.WeaponComponent == null)
+                return false;
+
+            var weaponClass = spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass;
+
+            // 如果是投掷武器，检查是否为空袋子
+            bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
+                                  weaponClass == WeaponClass.ThrowingKnife ||
+                                  weaponClass == WeaponClass.Javelin;
+            bool isQuiverAndNotEmpty = spawnedItem.IsQuiverAndNotEmpty();
+
+            if (isThrowingWeapon && !isQuiverAndNotEmpty)
             {
-                if (spawnedItem?.GameEntity == null ||
-                    !spawnedItem.GameEntity.IsVisibleIncludeParents() ||
-                    spawnedItem.WeaponCopy.IsEmpty ||
-                    spawnedItem.WeaponCopy.Item?.WeaponComponent == null)
-                    return false;
-
-                var weaponClass = spawnedItem.WeaponCopy.Item.WeaponComponent.PrimaryWeapon.WeaponClass;
-
-                // 如果是投掷武器，检查是否为空袋子
-                bool isThrowingWeapon = weaponClass == WeaponClass.ThrowingAxe ||
-                                      weaponClass == WeaponClass.ThrowingKnife ||
-                                      weaponClass == WeaponClass.Javelin;
-                bool isQuiverAndNotEmpty = spawnedItem.IsQuiverAndNotEmpty();
-
-                if (isThrowingWeapon && !isQuiverAndNotEmpty)
-                {
-                    return false;
-                }
-
-                // 判断是否为盾牌，并检查是否允许盾牌拾取
-                bool isShield = IsShield(spawnedItem);
-                if (isShield)
-                {
-                    return IsShieldPickupEnabled();
-                }
-
-                return IsMeleeWeapon(spawnedItem.WeaponCopy.Item.WeaponComponent);
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.Log("PickUpWeapon", $"检查武器有效性时出错: {ex.Message}");
-#endif
                 return false;
             }
+
+            // 判断是否为盾牌，并检查是否允许盾牌拾取
+            bool isShield = IsShield(spawnedItem);
+            if (isShield)
+            {
+                return IsShieldPickupEnabled();
+            }
+
+            return IsMeleeWeapon(spawnedItem.WeaponCopy.Item.WeaponComponent);
         }
 
         /// <summary>
@@ -184,18 +178,14 @@ namespace PickItUp.Util
                 return false;
             }
             
-            try
+            // 添加对WeaponDescriptionId的空检查
+            if (string.IsNullOrEmpty(weaponComponent.PrimaryWeapon.WeaponDescriptionId))
             {
-                bool isPickWeapon = weaponComponent.PrimaryWeapon.WeaponDescriptionId.Contains("_Pike");
-                return !isPickWeapon;
+                return true; // 如果描述ID为空,假设可以在马上使用
             }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.Log("WeaponCheck", $"检查武器是否可在马上使用时出错: {ex.Message}");
-#endif
-                return false;
-            }
+            
+            bool isPickWeapon = weaponComponent.PrimaryWeapon.WeaponDescriptionId.Contains("_Pike");
+            return !isPickWeapon;
         }
     }
 }

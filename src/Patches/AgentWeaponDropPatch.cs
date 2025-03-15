@@ -23,22 +23,15 @@ namespace PickItUp.Patches
         /// </summary>
         public static bool HasDisarmCooldown(Agent agent)
         {
-            try
-            {
-                if (agent == null) return false;
+            if (agent == null) return false;
 
-                if (_disarmedAgentTimes.TryGetValue(agent, out float disarmedTime))
-                {
-                    float currentTime = Mission.Current.CurrentTime;
-                    bool hasCooldown = (currentTime - disarmedTime) < PickupDelay;
-                    return hasCooldown;
-                }
-                return false;
-            }
-            catch (Exception)
+            if (_disarmedAgentTimes.TryGetValue(agent, out float disarmedTime))
             {
-                return false;
+                float currentTime = Mission.Current.CurrentTime;
+                bool hasCooldown = (currentTime - disarmedTime) < PickupDelay;
+                return hasCooldown;
             }
+            return false;
         }
         #endregion
 
@@ -51,20 +44,14 @@ namespace PickItUp.Patches
             [HarmonyPostfix]
             public static void DropItemPostfix(Agent __instance)
             {
-                try
+                if (__instance == null || !__instance.IsAIControlled || __instance.Health <= 0f)
                 {
-                    if (__instance == null || !__instance.IsAIControlled || __instance.Health <= 0f)
-                    {
-                        return;
-                    }
-
-                    if (!__instance.HasMeleeWeaponCached && !__instance.HasSpearCached)
-                    {
-                        _disarmedAgentTimes[__instance] = Mission.Current.CurrentTime;
-                    }
+                    return;
                 }
-                catch (Exception)
+
+                if (!__instance.HasMeleeWeaponCached && !__instance.HasSpearCached)
                 {
+                    _disarmedAgentTimes[__instance] = Mission.Current.CurrentTime;
                 }
             }
         }
@@ -76,21 +63,13 @@ namespace PickItUp.Patches
             [HarmonyPostfix]
             public static void OnAgentDeletedPostfix(Agent affectedAgent)
             {
-                try
-                {
-                    if (affectedAgent != null)
-                    {
-#if DEBUG
-                        DebugHelper.Log("AgentWeaponDrop", $"Agent {affectedAgent.Name} 被删除，清理其缴械状态");
-#endif
-                        RemoveDisarmCooldown(affectedAgent);
-                    }
-                }
-                catch (Exception ex)
+
+                if (affectedAgent != null)
                 {
 #if DEBUG
-                    DebugHelper.Log("AgentWeaponDrop", $"处理Agent删除时出错: {ex.Message}");
+                    DebugHelper.Log("AgentWeaponDrop", $"Agent {affectedAgent.Name} 被删除，清理其缴械状态");
 #endif
+                    RemoveDisarmCooldown(affectedAgent);
                 }
             }
 
@@ -98,19 +77,11 @@ namespace PickItUp.Patches
             [HarmonyPostfix]
             public static void EndMissionPostfix()
             {
-                try
-                {
 #if DEBUG
-                    DebugHelper.Log("AgentWeaponDrop", "任务结束，清理所有缴械状态");
+                DebugHelper.Log("AgentWeaponDrop", "任务结束，清理所有缴械状态");
 #endif
-                    ClearAllCooldowns();
-                }
-                catch (Exception ex)
-                {
-#if DEBUG
-                    DebugHelper.Log("AgentWeaponDrop", $"处理任务结束时出错: {ex.Message}");
-#endif
-                }
+                ClearAllCooldowns();
+
             }
         }
         // <summary>
@@ -159,42 +130,24 @@ namespace PickItUp.Patches
         #region 辅助方法
         public static void RemoveDisarmCooldown(Agent agent)
         {
-            try
+            if (agent != null)
             {
-                if (agent != null)
+                if (_disarmedAgentTimes.Remove(agent))
                 {
-                    if (_disarmedAgentTimes.Remove(agent))
-                    {
 #if DEBUG
-                        DebugHelper.Log("AgentWeaponDrop", $"移除Agent {agent.Name} 的缴械冷却");
+                    DebugHelper.Log("AgentWeaponDrop", $"移除Agent {agent.Name} 的缴械冷却");
 #endif
-                    }
                 }
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", $"移除缴械冷却时出错: {ex.Message}");
-#endif
             }
         }
 
         public static void ClearAllCooldowns()
         {
-            try
-            {
-                int count = _disarmedAgentTimes.Count;
-                _disarmedAgentTimes.Clear();
+            int count = _disarmedAgentTimes.Count;
+            _disarmedAgentTimes.Clear();
 #if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却状态，共 {count} 个");
+            DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却状态，共 {count} 个");
 #endif
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", $"清理所有缴械冷却时出错: {ex.Message}");
-#endif
-            }
         }
         #endregion
     }

@@ -190,48 +190,30 @@ namespace PickItUp.Behaviors
 
         public override void OnRemoveBehavior()
         {
-            try
-            {
 #if DEBUG
-                LogDebug($"=== 开始场景退出清理 ===");
-                LogDebug($"当前注册物品数量: {_droppedItems.Count}");
+            LogDebug($"=== 开始场景退出清理 ===");
+            LogDebug($"当前注册物品数量: {_droppedItems.Count}");
 #endif
-                // 先清理所有物品的引用
-                foreach (var item in _droppedItems.ToList())
+            // 清理所有物品的引用
+            foreach (var item in _droppedItems.ToList())
+            {
+                if (item is SpawnedItemEntity spawnedItem)
                 {
-                    try
-                    {
-                        if (item is SpawnedItemEntity spawnedItem)
-                        {
-                            spawnedItem.HasLifeTime = true;
-                            spawnedItem.SetDisabled(true);
+                    spawnedItem.HasLifeTime = true;
+                    spawnedItem.SetDisabled(true);
 #if DEBUG
-                            string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
-                            LogDebug($"清理物品: {itemName}");
+                    string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
+                    LogDebug($"清理物品: {itemName}");
 #endif
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-#if DEBUG
-                        LogDebug($"清理单个物品时出错: {ex.Message}");
-#endif
-                    }
                 }
+            }
 
-                _droppedItems.Clear();
-                base.OnRemoveBehavior();
+            _droppedItems.Clear();
+            base.OnRemoveBehavior();
 
 #if DEBUG
-                LogDebug("=== 场景退出清理完成 ===");
+            LogDebug("=== 场景退出清理完成 ===");
 #endif
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                LogDebug($"场景退出清理时出错: {ex.Message}");
-#endif
-            }
         }
     }
 }
