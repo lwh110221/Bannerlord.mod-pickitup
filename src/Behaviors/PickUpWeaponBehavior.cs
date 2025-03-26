@@ -37,14 +37,10 @@ namespace PickItUp.Behaviors
         #region 初始化
         public PickUpWeaponBehavior()
         {
-            // 预先创建一些List对象放入对象池
             for (int i = 0; i < 10; i++)
             {
                 _listPool.Push(new List<SpawnedItemEntity>(INITIAL_LIST_CAPACITY));
             }
-#if DEBUG
-            DebugHelper.Log("PickUpWeapon", "=== PickItUp Mod Started ===");
-#endif
         }
 
         private List<SpawnedItemEntity> GetListFromPool()
@@ -272,37 +268,29 @@ namespace PickItUp.Behaviors
                 return false;
             }
 
-            // 正常武器拾取逻辑：如果有近战武器或长矛，不拾取武器
             bool needsWeapon = !agent.HasMeleeWeaponCached && !agent.HasSpearCached;
-
-            // 检查是否需要盾牌
             bool needsShield = WeaponCheck.IsShieldPickupEnabled() && CanAgentPickupShield(agent);
 
-            // 如果两种都不需要，直接返回false
             if (!needsWeapon && !needsShield)
             {
                 return false;
             }
 
-            // 如果没有近战武器，但在缴械冷却时间内，不允许拾取
             if (Patches.AgentWeaponDropPatch.HasDisarmCooldown(agent))
             {
                 return false;
             }
 
-            // 检查是否正在执行CinematicCombat动作
             if (CCmodAct.IsExecutingCinematicAction(agent))
             {
                 return false;
             }
 
-            // 检查是否正在进行拾取动画
             if (_agentStates.TryGetValue(agent, out var state) && state.AnimationState.WeaponToPickup != null)
             {
                 float currentTime = Mission.Current.CurrentTime;
                 float animationTime = currentTime - state.AnimationState.StartTime;
 
-                // 如果动画还在进行中，不允许新的拾取
                 if (animationTime <= PICKUP_ANIMATION_DURATION)
                 {
                     return false;

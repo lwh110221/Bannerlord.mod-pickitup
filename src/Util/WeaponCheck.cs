@@ -178,10 +178,9 @@ namespace PickItUp.Util
                 return false;
             }
             
-            // 添加对WeaponDescriptionId的空检查
             if (string.IsNullOrEmpty(weaponComponent.PrimaryWeapon.WeaponDescriptionId))
             {
-                return true; // 如果描述ID为空,假设可以在马上使用
+                return true;
             }
             
             bool isPickWeapon = weaponComponent.PrimaryWeapon.WeaponDescriptionId.Contains("_Pike");

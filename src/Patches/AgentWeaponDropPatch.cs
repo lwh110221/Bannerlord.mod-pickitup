@@ -66,9 +66,6 @@ namespace PickItUp.Patches
 
                 if (affectedAgent != null)
                 {
-#if DEBUG
-                    DebugHelper.Log("AgentWeaponDrop", $"Agent {affectedAgent.Name} 被删除，清理其缴械状态");
-#endif
                     RemoveDisarmCooldown(affectedAgent);
                 }
             }
@@ -77,9 +74,6 @@ namespace PickItUp.Patches
             [HarmonyPostfix]
             public static void EndMissionPostfix()
             {
-#if DEBUG
-                DebugHelper.Log("AgentWeaponDrop", "任务结束，清理所有缴械状态");
-#endif
                 ClearAllCooldowns();
 
             }
@@ -102,7 +96,10 @@ namespace PickItUp.Patches
                 {
                     MissionWeapon weapon = __instance.Equipment[slotIndex];
                     if (weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Bolt ||
-                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Arrow)
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Arrow ||
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Musket ||
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Pistol ||
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Dagger)
                     {
                         if (__instance.IsPlayerControlled)
                         {

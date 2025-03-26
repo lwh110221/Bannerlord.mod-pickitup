@@ -59,12 +59,10 @@ namespace PickItUp.Patches
         [HarmonyPostfix]
         public static void SpawnedItemEntityCtorPostfix(SpawnedItemEntity __instance)
         {
-            // Mcm检查是否启用
             if (!Settings.McmSettings.Instance.EnableWeaponPersistence) return;
 
             if (__instance?.WeaponCopy.Item == null || Mission.Current == null) return;
 
-            // 检查武器类型是否应该持久化
             if (!ShouldPersistWeapon(__instance.WeaponCopy.Item)) return;
 
             var manager = Mission.Current.GetMissionBehavior<DroppedItemManager>();
@@ -91,7 +89,7 @@ namespace PickItUp.Patches
 
             if (__instance?.WeaponCopy.Item != null && ShouldPersistWeapon(__instance.WeaponCopy.Item))
             {
-                value = false;  // false，使物品永久存在
+                value = false;
             }
             return true;
         }
@@ -119,15 +117,7 @@ namespace PickItUp.Patches
 
         public override void OnRemoveBehavior()
         {
-#if DEBUG
-            if (DroppedItemPatch._pendingActions.Count > 0)
-            {
-                DebugHelper.Log("SafeActionProcessor", $"清理剩余的 {DroppedItemPatch._pendingActions.Count} 个待处理操作");
-            }
-#endif
-            // 清理所有待处理的操作
             DroppedItemPatch._pendingActions.Clear();
-            // 重置处理标志
             DroppedItemPatch._isProcessingActions = false;
 
             base.OnRemoveBehavior();
@@ -148,13 +138,6 @@ namespace PickItUp.Patches
                     action?.Invoke();
                     processedCount++;
                 }
-
-#if DEBUG
-                if (processedCount > 0)
-                {
-                    DebugHelper.Log("SafeActionProcessor", $"本帧处理了 {processedCount} 个物品操作，剩余 {DroppedItemPatch._pendingActions.Count} 个待处理");
-                }
-#endif
 
                 DroppedItemPatch._isProcessingActions = false;
 

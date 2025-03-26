@@ -82,6 +82,23 @@ namespace PickItUp
             mission.AddMissionBehavior(new DroppedItemManager());
         }
 
+        public override void OnGameEnd(Game game)
+        {
+            base.OnGameEnd(game);
+            if (_mainHarmony != null)
+            {
+                _mainHarmony.UnpatchAll(HARMONY_ID);
+                _mainHarmony = null;
+
+            }
+            if (_extendHarmony != null)
+            {
+                _extendHarmony.UnpatchAll(HARMONY_ID);
+                _extendHarmony = null;
+            }
+        }
+
+
         #region RBM填装重置补丁
         private void ApplyReloadResetPatch()
         {
