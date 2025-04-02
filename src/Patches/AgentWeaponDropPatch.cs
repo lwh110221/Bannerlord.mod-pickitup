@@ -99,7 +99,8 @@ namespace PickItUp.Patches
                         weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Arrow ||
                         weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Musket ||
                         weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Pistol ||
-                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Dagger)
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Dagger ||
+                        weapon.CurrentUsageItem?.WeaponClass == WeaponClass.Boulder)
                     {
                         if (__instance.IsPlayerControlled)
                         {
