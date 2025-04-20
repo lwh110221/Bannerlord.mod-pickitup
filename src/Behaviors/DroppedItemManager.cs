@@ -72,13 +72,9 @@ namespace PickItUp.Behaviors
                 _hasDisplayedMessage = true;
 
                 string statusEN = Settings.McmSettings.Instance.EnableWeaponPersistence ? "ON" : "OFF";
-                string statusCN = Settings.McmSettings.Instance.EnableWeaponPersistence ? "已开启" : "已关闭";
 
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"PIU: Weapon do not disappear-{statusEN}",
-                    Colors.Yellow));
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"PIU：武器不消失-{statusCN}",
                     Colors.Yellow));
             }
         }

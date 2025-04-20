@@ -2,7 +2,7 @@
 <Module>
     <Name value="Pick It Up"/>
     <Id value="PickItUp"/>
-    <Version value="v1.2.4.3"/>
+    <Version value="v1.2.4.4"/>
     <author value="Ahao221"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>
@@ -13,7 +13,7 @@
         <DependedModule Id="CustomBattle" DependentVersion="v1.2.x"/>
         <DependedModule Id="StoryMode" DependentVersion="v1.2.x"/>
         <DependedModule Id="Bannerlord.Harmony" />
-        <DependedModule Id="Bannerlord.MBOptionScreen" DependentVersion="v5.10.1"/>
+        <DependedModule Id="Bannerlord.MBOptionScreen" />
     </DependedModules>
     <SubModules>
         <SubModule>

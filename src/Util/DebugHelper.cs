@@ -85,9 +85,6 @@ namespace PickItUp
             }
 #endif
         }
-        /// <summary>
-        /// 检查是否处于调试模式
-        /// </summary>
         public static bool IsDebug => IsDebugMode;
     }
 } 
