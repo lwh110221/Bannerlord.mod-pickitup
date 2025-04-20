@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.Core;
@@ -6,6 +5,7 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using PickItUp.Util;
+using TaleWorlds.CampaignSystem;
 
 namespace PickItUp.Behaviors
 {
@@ -116,11 +116,14 @@ namespace PickItUp.Behaviors
                     return false;
                 }
 
-                // 检查任务模式
                 var missionMode = Mission.Current.Mode;
-                if (missionMode != MissionMode.Battle &&
-                    missionMode != MissionMode.Duel &&
-                    missionMode != MissionMode.Tournament)
+                if (missionMode == MissionMode.Conversation ||
+                    missionMode == MissionMode.Deployment)
+                {
+                    return false;
+                }
+
+                if (IsCivilianCharacter(agent))
                 {
                     return false;
                 }
@@ -261,9 +264,13 @@ namespace PickItUp.Behaviors
                 return false;
             }
             var missionMode = Mission.Current.Mode;
-            if (missionMode != MissionMode.Battle &&
-                missionMode != MissionMode.Duel &&
-                missionMode != MissionMode.Tournament)
+            if (missionMode == MissionMode.Conversation ||
+                missionMode == MissionMode.Deployment)
+            {
+                return false;
+            }
+
+            if (IsCivilianCharacter(agent))
             {
                 return false;
             }
@@ -728,6 +735,7 @@ namespace PickItUp.Behaviors
             {
                 agent.DisableScriptedMovement();
                 agent.AIMoveToGameObjectDisable();
+                agent.ResetEnemyCaches();
             }
 
             if (!string.IsNullOrEmpty(reason))
@@ -985,5 +993,41 @@ namespace PickItUp.Behaviors
             }
         }
         #endregion
+        public static bool IsCivilianCharacter(Agent agent)
+        {
+            if (agent == null || !agent.IsHuman || agent.Character == null)
+                return false;
+                
+            var culture = agent.Character.Culture as CultureObject;
+            if (culture == null)
+                return false;
+
+            return agent.Character == culture.Townsman ||
+                agent.Character == culture.Townswoman ||
+                agent.Character == culture.Villager ||
+                agent.Character == culture.VillageWoman ||
+                agent.Character == culture.Beggar ||
+                agent.Character == culture.FemaleBeggar ||
+                agent.Character == culture.FemaleDancer ||
+                agent.Character == culture.ShopWorker ||
+                agent.Character == culture.TavernWench ||
+                agent.Character == culture.TownsmanChild ||
+                agent.Character == culture.TownswomanChild ||
+                agent.Character == culture.VillagerMaleChild ||
+                agent.Character == culture.VillagerFemaleChild ||
+                agent.Character == culture.Merchant ||
+                agent.Character == culture.Tavernkeeper ||
+                agent.Character == culture.TavernGamehost ||
+                agent.Character == culture.Musician ||
+                agent.Character == culture.HorseMerchant ||
+                agent.Character == culture.Barber ||
+                agent.Character == culture.Blacksmith ||
+                agent.Character == culture.Weaponsmith ||
+                agent.Character == culture.RansomBroker ||
+                agent.Character == culture.MerchantNotary ||
+                agent.Character == culture.ArtisanNotary ||
+                agent.Character == culture.PreacherNotary ||
+                agent.Character == culture.RuralNotableNotary;
+        }
     }
 }

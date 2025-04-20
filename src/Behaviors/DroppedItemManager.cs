@@ -46,9 +46,6 @@ namespace PickItUp.Behaviors
         {
             _droppedItems = new MBBindingList<MissionObject>();
             _lastPersistenceState = Settings.McmSettings.Instance.EnableWeaponPersistence;
-#if DEBUG
-            LogDebug("武器持久化已初始化");
-#endif
         }
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
@@ -81,9 +78,6 @@ namespace PickItUp.Behaviors
 
         private void OnPersistenceSettingChanged(bool newState)
         {
-#if DEBUG
-            LogDebug($"武器持久化设置已更改为: {(newState ? "开启" : "关闭")}");
-#endif
             if (!newState)
             {
                 // 设置被禁用时，只处理已注册的物品
@@ -176,40 +170,22 @@ namespace PickItUp.Behaviors
         public override void OnBehaviorInitialize()
         {
             base.OnBehaviorInitialize();
-            // 在每次进入新场景时重新获取设置
             _hasDisplayedMessage = false;
-
-#if DEBUG
-            LogDebug($"武器持久化已初始化");
-#endif
         }
 
         public override void OnRemoveBehavior()
         {
-#if DEBUG
-            LogDebug($"=== 开始场景退出清理 ===");
-            LogDebug($"当前注册物品数量: {_droppedItems.Count}");
-#endif
-            // 清理所有物品的引用
             foreach (var item in _droppedItems.ToList())
             {
                 if (item is SpawnedItemEntity spawnedItem)
                 {
                     spawnedItem.HasLifeTime = true;
                     spawnedItem.SetDisabled(true);
-#if DEBUG
-                    string itemName = spawnedItem.WeaponCopy.Item?.Name?.ToString() ?? "未知物品";
-                    LogDebug($"清理物品: {itemName}");
-#endif
                 }
             }
 
             _droppedItems.Clear();
             base.OnRemoveBehavior();
-
-#if DEBUG
-            LogDebug("=== 场景退出清理完成 ===");
-#endif
         }
     }
 }

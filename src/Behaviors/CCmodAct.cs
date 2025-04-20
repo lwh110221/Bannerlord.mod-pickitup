@@ -163,7 +163,7 @@ namespace PickItUp.Behaviors
             "combat_big_bashes_dead",
             "combat_big_bashes_kill",
             
-            // 大师级反
+            // 大师反
             "twohanded_master_strike_1_affected",
             "twohanded_master_strike_2_affected",
             "twohanded_master_strike_3_affected",
@@ -207,7 +207,13 @@ namespace PickItUp.Behaviors
             "cc_twohanded_dodge_back",
             "cc_onehanded_dodge_right",
             "cc_onehanded_dodge_left",
-            "cc_onehanded_dodge_back"
+            "cc_onehanded_dodge_back",
+
+            // 恐惧动作
+            "act_reactions_scared_1_start",
+            "act_reactions_scared_2_start",
+            "act_reactions_scared_3_start"
+
         };
 
         public static bool IsExecutingCinematicAction(Agent agent)
